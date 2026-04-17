@@ -7,6 +7,7 @@ import TransactionList from "@/src/components/TransactionList";
 import SpendingByCategory from "@/src/components/SpendingByCategory";
 import MonthlyTrend from "@/src/components/MonthlyTrend";
 import TopSpending from "@/src/components/TopSpending";
+import InsightsPanel from "@/src/components/InsightsPanel";
 
 function getMonthBounds(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString().split("T")[0];
@@ -119,6 +120,9 @@ export default async function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* AI Insights — loads async after page paint */}
+      <InsightsPanel totalTransactions={allTransactions.length} />
 
       {/* Analytics */}
       <div className="mb-8">

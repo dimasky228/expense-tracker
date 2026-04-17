@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
 import CsvReviewTable from "@/src/components/CsvReviewTable";
+import { markInsightsStale } from "@/src/lib/insights-cache";
 import type { CategorizedTransaction } from "@/src/types/transaction";
 
 type Step = "idle" | "loading" | "review" | "saving" | "done";
@@ -105,6 +106,7 @@ export default function CsvImportModal() {
       return;
     }
 
+    markInsightsStale(); // trigger insight refresh on next dashboard load
     setStep("done");
     setTimeout(() => {
       setOpen(false);

@@ -4,15 +4,13 @@ import type { Transaction } from "@/src/types/transaction";
 import AddTransactionModal from "@/src/components/AddTransactionModal";
 import CsvImportModal from "@/src/components/CsvImportModal";
 import TransactionList from "@/src/components/TransactionList";
+import SpendingByCategory from "@/src/components/SpendingByCategory";
+import MonthlyTrend from "@/src/components/MonthlyTrend";
+import TopSpending from "@/src/components/TopSpending";
 
-function getMonthBounds() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1)
-    .toISOString()
-    .split("T")[0];
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    .toISOString()
-    .split("T")[0];
+function getMonthBounds(year: number, month: number) {
+  const start = new Date(year, month, 1).toISOString().split("T")[0];
+  const end = new Date(year, month + 1, 0).toISOString().split("T")[0];
   return { start, end };
 }
 
@@ -39,29 +37,52 @@ export default async function DashboardPage() {
 
   const allTransactions = (transactions ?? []) as Transaction[];
 
-  const { start, end } = getMonthBounds();
+  const now = new Date();
+  const { start, end } = getMonthBounds(now.getFullYear(), now.getMonth());
+
   const monthTransactions = allTransactions.filter(
     (t) => t.date >= start && t.date <= end
   );
+  const monthExpenses = monthTransactions.filter((t) => t.type === "expense");
 
-  const totalSpent = monthTransactions
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
-
+  const totalSpent = monthExpenses.reduce((s, t) => s + Number(t.amount), 0);
   const totalIncome = monthTransactions
     .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + Number(t.amount), 0);
-
+    .reduce((s, t) => s + Number(t.amount), 0);
   const net = totalIncome - totalSpent;
 
-  const monthLabel = new Date().toLocaleString("en-US", {
-    month: "long",
-    year: "numeric",
+  // Category breakdown for donut + top-5 list
+  const catMap = monthExpenses.reduce(
+    (acc, t) => {
+      acc[t.category] = (acc[t.category] ?? 0) + Number(t.amount);
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+  const categoryData = Object.entries(catMap)
+    .map(([category, amount]) => ({
+      category,
+      amount,
+      percentage: totalSpent > 0 ? (amount / totalSpent) * 100 : 0,
+    }))
+    .sort((a, b) => b.amount - a.amount);
+
+  // Last 6 months for bar chart
+  const currentMonthShort = now.toLocaleString("en-US", { month: "short" });
+  const monthlyData = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const { start: ms, end: me } = getMonthBounds(d.getFullYear(), d.getMonth());
+    const amount = allTransactions
+      .filter((t) => t.type === "expense" && t.date >= ms && t.date <= me)
+      .reduce((s, t) => s + Number(t.amount), 0);
+    return { month: d.toLocaleString("en-US", { month: "short" }), amount };
   });
+
+  const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" });
 
   return (
     <div>
-      {/* Header row */}
+      {/* Header */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-50">{monthLabel}</h1>
@@ -96,6 +117,37 @@ export default async function DashboardPage() {
           >
             {formatCurrency(net)}
           </p>
+        </div>
+      </div>
+
+      {/* Analytics */}
+      <div className="mb-8">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+          Analytics
+        </h2>
+
+        {/* Charts row */}
+        <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+            <p className="mb-4 text-sm font-semibold text-zinc-300">
+              Spending by Category
+            </p>
+            <SpendingByCategory data={categoryData} />
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+            <p className="mb-4 text-sm font-semibold text-zinc-300">
+              Monthly Trend
+            </p>
+            <MonthlyTrend data={monthlyData} currentMonth={currentMonthShort} />
+          </div>
+        </div>
+
+        {/* Top spending */}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+          <p className="mb-4 text-sm font-semibold text-zinc-300">
+            Top Spending
+          </p>
+          <TopSpending data={categoryData.slice(0, 5)} />
         </div>
       </div>
 

@@ -1,0 +1,18 @@
+export const CATEGORY_COLORS: Record<string, string> = {
+  "Food & Dining": "#f97316",
+  "Groceries": "#22c55e",
+  "Transport": "#3b82f6",
+  "Housing": "#64748b",
+  "Entertainment": "#a855f7",
+  "Shopping": "#ec4899",
+  "Health": "#14b8a6",
+  "Utilities": "#f59e0b",
+  "Subscriptions": "#22d3ee",
+  "Education": "#6366f1",
+  "Travel": "#10b981",
+  "Transfer": "#8b5cf6",
+  "Salary": "#84cc16",
+  "Freelance": "#06b6d4",
+  "Investment": "#0ea5e9",
+  "Other": "#71717a",
+};

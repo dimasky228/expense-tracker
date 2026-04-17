@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/server";
 import type { Transaction } from "@/src/types/transaction";
 import AddTransactionModal from "@/src/components/AddTransactionModal";
+import CsvImportModal from "@/src/components/CsvImportModal";
 import TransactionList from "@/src/components/TransactionList";
 
 function getMonthBounds() {
@@ -66,7 +67,10 @@ export default async function DashboardPage() {
           <h1 className="text-2xl font-bold text-zinc-50">{monthLabel}</h1>
           <p className="mt-1 text-sm text-zinc-400">Monthly overview</p>
         </div>
-        <AddTransactionModal />
+        <div className="flex items-center gap-3">
+          <CsvImportModal />
+          <AddTransactionModal />
+        </div>
       </div>
 
       {/* Summary cards */}

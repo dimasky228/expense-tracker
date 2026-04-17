@@ -169,18 +169,18 @@ export default function Home() {
             Expense<span className="text-cyan-400">AI</span>
           </Link>
           <div className="flex items-center gap-3">
-            <a
-              href="#"
+            <Link
+              href="/login"
               className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
             >
               Sign in
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/signup"
               className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
             >
               Get started
-            </a>
+            </Link>
           </div>
         </nav>
       </header>
@@ -216,12 +216,12 @@ export default function Home() {
                 connection required.
               </p>
               <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
-                <a
-                  href="#"
+                <Link
+                  href="/signup"
                   className="w-full rounded-xl bg-cyan-400 px-8 py-3.5 text-center text-base font-semibold text-zinc-950 transition-colors hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:w-auto"
                 >
                   Start tracking free
-                </a>
+                </Link>
                 <a
                   href="#how-it-works"
                   className="text-base font-medium text-zinc-400 transition-colors hover:text-zinc-50"
@@ -447,12 +447,12 @@ export default function Home() {
                     <span aria-hidden="true">✗</span> PDF reports
                   </li>
                 </ul>
-                <a
-                  href="#"
+                <Link
+                  href="/signup"
                   className="block w-full rounded-xl border border-zinc-700 px-6 py-3 text-center text-sm font-semibold text-zinc-50 transition-colors hover:border-zinc-500 hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 >
                   Get started free
-                </a>
+                </Link>
               </div>
 
               {/* Pro */}
@@ -510,12 +510,12 @@ export default function Home() {
                     Priority support
                   </li>
                 </ul>
-                <a
-                  href="#"
+                <Link
+                  href="/signup"
                   className="block w-full rounded-xl bg-cyan-400 px-6 py-3 text-center text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
                 >
                   Start Pro free trial
-                </a>
+                </Link>
               </div>
             </div>
           </div>

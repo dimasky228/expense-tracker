@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/src/lib/supabase/server";
+import { getSubscription, getUsageLimits } from "@/src/lib/subscription";
 import type { Transaction } from "@/src/types/transaction";
 
 function monthBounds(year: number, month: number) {
@@ -138,6 +139,14 @@ export async function GET() {
   } = await supabase.auth.getUser();
 
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const sub = await getSubscription(user.id);
+  if (!getUsageLimits(sub).canUseInsights) {
+    return NextResponse.json(
+      { error: "AI insights is a Pro feature. Upgrade to unlock.", code: "PRO_REQUIRED" },
+      { status: 403 }
+    );
+  }
 
   const { data: transactions } = await supabase
     .from("transactions")

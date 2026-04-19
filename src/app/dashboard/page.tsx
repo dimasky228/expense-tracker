@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/server";
+import { getSubscription, isPro as checkIsPro, getUsageLimits } from "@/src/lib/subscription";
+import { getImportCount, currentMonth } from "@/src/lib/usage";
 import type { Transaction } from "@/src/types/transaction";
 import AddTransactionModal from "@/src/components/AddTransactionModal";
 import CsvImportModal from "@/src/components/CsvImportModal";
@@ -9,6 +11,8 @@ import MonthlyTrend from "@/src/components/MonthlyTrend";
 import TopSpending from "@/src/components/TopSpending";
 import InsightsPanel from "@/src/components/InsightsPanel";
 import ExportPdfButton from "@/src/components/ExportPdfButton";
+import UpgradeButton from "@/src/components/UpgradeButton";
+import UpgradeSuccessToast from "@/src/components/UpgradeSuccessToast";
 
 function getMonthBounds(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString().split("T")[0];
@@ -22,13 +26,27 @@ function formatCurrency(amount: number, sign = true) {
   return amount < 0 ? `-$${abs}` : `+$${abs}`;
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ upgraded?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/login");
+
+  // Fetch subscription + usage in parallel
+  const month = currentMonth();
+  const [sub, importsUsed] = await Promise.all([
+    getSubscription(user.id),
+    getImportCount(user.id, month),
+  ]);
+
+  const isPro = checkIsPro(sub);
+  const limits = getUsageLimits(sub);
 
   const { data: transactions } = await supabase
     .from("transactions")
@@ -53,7 +71,6 @@ export default async function DashboardPage() {
     .reduce((s, t) => s + Number(t.amount), 0);
   const net = totalIncome - totalSpent;
 
-  // Category breakdown for donut + top-5 list
   const catMap = monthExpenses.reduce(
     (acc, t) => {
       acc[t.category] = (acc[t.category] ?? 0) + Number(t.amount);
@@ -69,7 +86,6 @@ export default async function DashboardPage() {
     }))
     .sort((a, b) => b.amount - a.amount);
 
-  // Last 6 months for bar chart
   const currentMonthShort = now.toLocaleString("en-US", { month: "short" });
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
@@ -81,10 +97,19 @@ export default async function DashboardPage() {
   });
 
   const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" });
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const currentMonthSlug = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  const params = await searchParams;
+  const showUpgradeToast = params.upgraded === "true";
 
   return (
     <div>
+      {/* Upgrade success toast */}
+      <UpgradeSuccessToast show={showUpgradeToast} />
+
+      {/* Upgrade banner for free users */}
+      {!isPro && <UpgradeButton variant="banner" />}
+
       {/* Header */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
@@ -92,8 +117,11 @@ export default async function DashboardPage() {
           <p className="mt-1 text-sm text-zinc-400">Monthly overview</p>
         </div>
         <div className="flex items-center gap-3">
-          <ExportPdfButton month={currentMonth} />
-          <CsvImportModal />
+          <ExportPdfButton month={currentMonthSlug} isPro={isPro} />
+          <CsvImportModal
+            isPro={isPro}
+            importsUsed={importsUsed}
+          />
           <AddTransactionModal />
         </div>
       </div>
@@ -124,8 +152,11 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* AI Insights — loads async after page paint */}
-      <InsightsPanel totalTransactions={allTransactions.length} />
+      {/* AI Insights */}
+      <InsightsPanel
+        totalTransactions={allTransactions.length}
+        isPro={isPro}
+      />
 
       {/* Analytics */}
       <div className="mb-8">
@@ -133,33 +164,28 @@ export default async function DashboardPage() {
           Analytics
         </h2>
 
-        {/* Charts row */}
         <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="mb-4 text-sm font-semibold text-zinc-300">
-              Spending by Category
-            </p>
+            <p className="mb-4 text-sm font-semibold text-zinc-300">Spending by Category</p>
             <SpendingByCategory data={categoryData} />
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="mb-4 text-sm font-semibold text-zinc-300">
-              Monthly Trend
-            </p>
+            <p className="mb-4 text-sm font-semibold text-zinc-300">Monthly Trend</p>
             <MonthlyTrend data={monthlyData} currentMonth={currentMonthShort} />
           </div>
         </div>
 
-        {/* Top spending */}
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-          <p className="mb-4 text-sm font-semibold text-zinc-300">
-            Top Spending
-          </p>
+          <p className="mb-4 text-sm font-semibold text-zinc-300">Top Spending</p>
           <TopSpending data={categoryData.slice(0, 5)} />
         </div>
       </div>
 
       {/* Transaction list */}
       <TransactionList transactions={allTransactions} />
+
+      {/* Suppress unused var warning */}
+      {limits && null}
     </div>
   );
 }

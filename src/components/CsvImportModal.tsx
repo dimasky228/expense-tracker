@@ -4,27 +4,40 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
 import CsvReviewTable from "@/src/components/CsvReviewTable";
+import UpgradeButton from "@/src/components/UpgradeButton";
 import { markInsightsStale } from "@/src/lib/insights-cache";
 import type { CategorizedTransaction } from "@/src/types/transaction";
 
+const FREE_LIMIT = 3;
+
 type Step = "idle" | "loading" | "review" | "saving" | "done";
 
-export default function CsvImportModal() {
+export default function CsvImportModal({
+  isPro,
+  importsUsed,
+}: {
+  isPro: boolean;
+  importsUsed: number;
+}) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("idle");
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState("");
+  const [limitReached, setLimitReached] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [transactions, setTransactions] = useState<CategorizedTransaction[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  const atLimit = !isPro && importsUsed >= FREE_LIMIT;
 
   function reset() {
     setStep("idle");
     setFile(null);
     setError("");
     setSaveError("");
+    setLimitReached(false);
     setTransactions([]);
     setDragOver(false);
   }
@@ -55,6 +68,7 @@ export default function CsvImportModal() {
     if (!file) return;
     setStep("loading");
     setError("");
+    setLimitReached(false);
 
     const body = new FormData();
     body.append("file", file);
@@ -63,8 +77,13 @@ export default function CsvImportModal() {
       const res = await fetch("/api/import", { method: "POST", body });
       const json = await res.json();
       if (!res.ok) {
-        setError(json.error ?? "Import failed");
-        setStep("idle");
+        if ((json as { code?: string }).code === "LIMIT_REACHED") {
+          setLimitReached(true);
+          setStep("idle");
+        } else {
+          setError(json.error ?? "Import failed");
+          setStep("idle");
+        }
         return;
       }
       setTransactions(json.transactions as CategorizedTransaction[]);
@@ -106,7 +125,7 @@ export default function CsvImportModal() {
       return;
     }
 
-    markInsightsStale(); // trigger insight refresh on next dashboard load
+    markInsightsStale();
     setStep("done");
     setTimeout(() => {
       setOpen(false);
@@ -124,6 +143,11 @@ export default function CsvImportModal() {
         className="rounded-xl border border-zinc-700 px-5 py-2.5 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-zinc-50"
       >
         Import CSV
+        {!isPro && (
+          <span className="ml-2 text-xs text-zinc-500">
+            {importsUsed}/{FREE_LIMIT}
+          </span>
+        )}
       </button>
 
       {open && (
@@ -141,9 +165,7 @@ export default function CsvImportModal() {
             {(step === "idle" || step === "loading") && (
               <div>
                 <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-zinc-50">
-                    Import CSV
-                  </h2>
+                  <h2 className="text-lg font-semibold text-zinc-50">Import CSV</h2>
                   <button
                     onClick={handleClose}
                     className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
@@ -154,79 +176,99 @@ export default function CsvImportModal() {
                   </button>
                 </div>
 
-                {/* Drop zone */}
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                  onDragLeave={() => setDragOver(false)}
-                  onClick={() => !file && fileInputRef.current?.click()}
-                  className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
-                    dragOver
-                      ? "border-cyan-400 bg-cyan-400/5"
-                      : "border-zinc-700 hover:border-zinc-500"
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mx-auto h-8 w-8 text-zinc-500">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                  </svg>
-                  <p className="mt-3 text-sm text-zinc-400">
-                    Drag & drop your CSV, or{" "}
-                    <span className="text-cyan-400">browse</span>
-                  </p>
-                  <p className="mt-1 text-xs text-zinc-600">
-                    Export a CSV statement from your bank and drop it here
-                  </p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".csv"
-                    className="hidden"
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) acceptFile(f); }}
-                  />
-                </div>
-
-                {/* Selected file */}
-                {file && (
-                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800/50 px-4 py-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5 shrink-0 text-cyan-400">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                    </svg>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-200">{file.name}</p>
-                      <p className="text-xs text-zinc-500">{(file.size / 1024).toFixed(1)} KB</p>
+                {/* Limit reached — upgrade CTA */}
+                {(atLimit || limitReached) ? (
+                  <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-5 text-center">
+                    <p className="text-sm font-semibold text-zinc-100">Monthly limit reached</p>
+                    <p className="mt-2 text-sm text-zinc-400">
+                      You&apos;ve used {FREE_LIMIT} of {FREE_LIMIT} free imports this month.
+                      Upgrade to Pro for unlimited CSV imports.
+                    </p>
+                    <div className="mt-4 flex justify-center">
+                      <UpgradeButton variant="inline" />
                     </div>
-                    <button onClick={() => setFile(null)} className="shrink-0 text-zinc-500 hover:text-zinc-300">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-
-                {error && (
-                  <p className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                    {error}
-                  </p>
-                )}
-
-                {step === "loading" ? (
-                  <div className="mt-4 flex items-center justify-center gap-3 rounded-xl bg-zinc-800/50 py-4">
-                    <svg className="h-5 w-5 animate-spin text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    <span className="text-sm text-zinc-300">
-                      AI is categorizing your transactions…
-                    </span>
                   </div>
                 ) : (
-                  <button
-                    onClick={handleUpload}
-                    disabled={!file}
-                    className="mt-4 w-full rounded-xl bg-cyan-400 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Upload & categorize
-                  </button>
+                  <>
+                    {!isPro && (
+                      <p className="mb-4 text-xs text-zinc-500">
+                        {FREE_LIMIT - importsUsed} of {FREE_LIMIT} free imports remaining this month
+                      </p>
+                    )}
+
+                    {/* Drop zone */}
+                    <div
+                      onDrop={handleDrop}
+                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                      onDragLeave={() => setDragOver(false)}
+                      onClick={() => !file && fileInputRef.current?.click()}
+                      className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
+                        dragOver
+                          ? "border-cyan-400 bg-cyan-400/5"
+                          : "border-zinc-700 hover:border-zinc-500"
+                      }`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mx-auto h-8 w-8 text-zinc-500">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                      </svg>
+                      <p className="mt-3 text-sm text-zinc-400">
+                        Drag & drop your CSV, or{" "}
+                        <span className="text-cyan-400">browse</span>
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-600">
+                        Export a CSV statement from your bank and drop it here
+                      </p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) acceptFile(f); }}
+                      />
+                    </div>
+
+                    {/* Selected file */}
+                    {file && (
+                      <div className="mt-3 flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800/50 px-4 py-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5 shrink-0 text-cyan-400">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                        </svg>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-zinc-200">{file.name}</p>
+                          <p className="text-xs text-zinc-500">{(file.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                        <button onClick={() => setFile(null)} className="shrink-0 text-zinc-500 hover:text-zinc-300">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+
+                    {error && (
+                      <p className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                        {error}
+                      </p>
+                    )}
+
+                    {step === "loading" ? (
+                      <div className="mt-4 flex items-center justify-center gap-3 rounded-xl bg-zinc-800/50 py-4">
+                        <svg className="h-5 w-5 animate-spin text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        <span className="text-sm text-zinc-300">AI is categorizing your transactions…</span>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleUpload}
+                        disabled={!file}
+                        className="mt-4 w-full rounded-xl bg-cyan-400 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Upload & categorize
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -235,9 +277,7 @@ export default function CsvImportModal() {
             {(step === "review" || step === "saving") && (
               <div>
                 <div className="mb-5 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-zinc-50">
-                    Review import
-                  </h2>
+                  <h2 className="text-lg font-semibold text-zinc-50">Review import</h2>
                   <button
                     onClick={handleClose}
                     disabled={step === "saving"}
@@ -266,9 +306,7 @@ export default function CsvImportModal() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                   </svg>
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-zinc-50">
-                  Imported!
-                </h3>
+                <h3 className="mt-4 text-lg font-semibold text-zinc-50">Imported!</h3>
                 <p className="mt-2 text-sm text-zinc-400">
                   {transactions.length} transactions added to your dashboard.
                 </p>

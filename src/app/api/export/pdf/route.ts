@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { createElement, type ReactElement } from "react";
 import { createClient } from "@/src/lib/supabase/server";
+import { getSubscription, getUsageLimits } from "@/src/lib/subscription";
 import MonthlyReport from "@/src/components/pdf/MonthlyReport";
 import type { Transaction } from "@/src/types/transaction";
 
@@ -16,6 +17,14 @@ export async function GET(request: Request) {
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const sub = await getSubscription(user.id);
+  if (!getUsageLimits(sub).canExportPdf) {
+    return NextResponse.json(
+      { error: "PDF export is a Pro feature. Upgrade to unlock.", code: "PRO_REQUIRED" },
+      { status: 403 }
+    );
   }
 
   const now = new Date();

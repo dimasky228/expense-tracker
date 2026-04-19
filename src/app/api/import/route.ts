@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/src/lib/supabase/server";
 import { parseCSV } from "@/src/lib/csv-parser";
+import { getSubscription, getUsageLimits } from "@/src/lib/subscription";
+import { getImportCount, incrementImportCount, currentMonth } from "@/src/lib/usage";
 import type { CategorizedTransaction, TransactionType } from "@/src/types/transaction";
 
 const CATEGORIES = [
@@ -86,6 +88,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Check CSV import limit for free users
+  const sub = await getSubscription(user.id);
+  const limits = getUsageLimits(sub);
+  if (limits.csvImportsPerMonth !== Infinity) {
+    const month = currentMonth();
+    const used = await getImportCount(user.id, month);
+    if (used >= limits.csvImportsPerMonth) {
+      return NextResponse.json(
+        {
+          error: `Free plan allows ${limits.csvImportsPerMonth} CSV imports per month. Upgrade to Pro for unlimited imports.`,
+          code: "LIMIT_REACHED",
+        },
+        { status: 403 }
+      );
+    }
+  }
+
   let formData: FormData;
   try {
     formData = await request.formData();
@@ -152,6 +171,9 @@ export async function POST(request: NextRequest) {
       });
     }
   }
+
+  // Increment usage counter
+  await incrementImportCount(user.id, currentMonth());
 
   return NextResponse.json({ transactions: categorized, count: categorized.length });
 }

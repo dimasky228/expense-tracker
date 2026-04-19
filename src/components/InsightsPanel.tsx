@@ -8,6 +8,7 @@ import {
   getCacheTimestamp,
 } from "@/src/lib/insights-cache";
 import InsightCard from "@/src/components/InsightCard";
+import UpgradeButton from "@/src/components/UpgradeButton";
 
 function timeAgo(ts: number): string {
   const mins = Math.floor((Date.now() - ts) / 60_000);
@@ -36,8 +37,10 @@ type Status = "checking" | "fetching" | "loaded" | "error" | "insufficient";
 
 export default function InsightsPanel({
   totalTransactions,
+  isPro,
 }: {
   totalTransactions: number;
+  isPro: boolean;
 }) {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [status, setStatus] = useState<Status>("checking");
@@ -81,16 +84,15 @@ export default function InsightsPanel({
   }, []);
 
   useEffect(() => {
+    if (!isPro) return;
     if (totalTransactions < 10) {
       setStatus("insufficient");
       return;
     }
-    // Sync timestamp from cache first (for "last analyzed" display)
     const ts = getCacheTimestamp();
     if (ts) setLastFetched(ts);
-
     loadInsights(false);
-  }, [totalTransactions, loadInsights]);
+  }, [totalTransactions, loadInsights, isPro]);
 
   const isLoading = status === "checking" || status === "fetching";
 
@@ -101,32 +103,39 @@ export default function InsightsPanel({
         <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">
           AI Insights
         </h2>
-        {status === "loaded" && (
+        {isPro && status === "loaded" && (
           <button
             onClick={() => loadInsights(true)}
             className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-3.5 w-3.5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-              />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-3.5 w-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
             Refresh
           </button>
         )}
       </div>
 
+      {/* Free user gate */}
+      {!isPro && (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-5 py-8 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-400/10 text-cyan-400">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+            </svg>
+          </div>
+          <p className="text-sm font-semibold text-zinc-200">AI Insights — Pro feature</p>
+          <p className="mt-2 text-sm text-zinc-500">
+            Get personalized spending analysis, subscription detection, and saving opportunities.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <UpgradeButton variant="inline" />
+          </div>
+        </div>
+      )}
+
       {/* Skeleton */}
-      {isLoading && (
+      {isPro && isLoading && (
         <div className="space-y-3">
           <SkeletonCard />
           <SkeletonCard />
@@ -135,18 +144,17 @@ export default function InsightsPanel({
       )}
 
       {/* Insufficient data */}
-      {status === "insufficient" && (
+      {isPro && status === "insufficient" && (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-5 py-8 text-center">
           <p className="text-sm font-semibold text-zinc-300">Not enough data yet</p>
           <p className="mt-2 text-sm text-zinc-500">
-            Add at least 10 transactions to unlock AI insights. We need enough data
-            to find meaningful patterns.
+            Add at least 10 transactions to unlock AI insights.
           </p>
         </div>
       )}
 
       {/* Error */}
-      {status === "error" && (
+      {isPro && status === "error" && (
         <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-6 text-center">
           <p className="text-sm font-semibold text-red-400">Insights unavailable</p>
           <p className="mt-1 text-sm text-zinc-500">{errorMsg}</p>
@@ -160,7 +168,7 @@ export default function InsightsPanel({
       )}
 
       {/* Insights */}
-      {status === "loaded" && (
+      {isPro && status === "loaded" && (
         <>
           <div className="space-y-3">
             {insights.slice(0, 6).map((insight, i) => (

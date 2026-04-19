@@ -8,6 +8,7 @@ import SpendingByCategory from "@/src/components/SpendingByCategory";
 import MonthlyTrend from "@/src/components/MonthlyTrend";
 import TopSpending from "@/src/components/TopSpending";
 import InsightsPanel from "@/src/components/InsightsPanel";
+import ExportPdfButton from "@/src/components/ExportPdfButton";
 
 function getMonthBounds(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString().split("T")[0];
@@ -80,6 +81,7 @@ export default async function DashboardPage() {
   });
 
   const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   return (
     <div>
@@ -90,6 +92,7 @@ export default async function DashboardPage() {
           <p className="mt-1 text-sm text-zinc-400">Monthly overview</p>
         </div>
         <div className="flex items-center gap-3">
+          <ExportPdfButton month={currentMonth} />
           <CsvImportModal />
           <AddTransactionModal />
         </div>

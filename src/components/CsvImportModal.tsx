@@ -1,14 +1,34 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
 import CsvReviewTable from "@/src/components/CsvReviewTable";
 import UpgradeButton from "@/src/components/UpgradeButton";
 import { markInsightsStale } from "@/src/lib/insights-cache";
-import type { CategorizedTransaction } from "@/src/types/transaction";
+import type { CategorizedTransaction, ImportResult } from "@/src/types/transaction";
 
 const FREE_LIMIT = 3;
+const ACCOUNTS_KEY = "expenseai_recent_accounts";
+const MAX_SAVED_ACCOUNTS = 10;
+
+function loadRecentAccounts(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) ?? "[]") as string[];
+  } catch {
+    return [];
+  }
+}
+
+function saveAccount(name: string) {
+  const existing = loadRecentAccounts();
+  const updated = [name, ...existing.filter((a) => a !== name)].slice(
+    0,
+    MAX_SAVED_ACCOUNTS
+  );
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(updated));
+}
 
 type Step = "idle" | "loading" | "review" | "saving" | "done";
 
@@ -22,15 +42,21 @@ export default function CsvImportModal({
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("idle");
   const [file, setFile] = useState<File | null>(null);
+  const [account, setAccount] = useState("");
+  const [recentAccounts, setRecentAccounts] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState("");
   const [limitReached, setLimitReached] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [transactions, setTransactions] = useState<CategorizedTransaction[]>([]);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const atLimit = !isPro && importsUsed >= FREE_LIMIT;
+
+  useEffect(() => {
+    if (open) setRecentAccounts(loadRecentAccounts());
+  }, [open]);
 
   function reset() {
     setStep("idle");
@@ -38,8 +64,9 @@ export default function CsvImportModal({
     setError("");
     setSaveError("");
     setLimitReached(false);
-    setTransactions([]);
+    setImportResult(null);
     setDragOver(false);
+    // keep account for convenience
   }
 
   function handleClose() {
@@ -72,12 +99,17 @@ export default function CsvImportModal({
 
     const body = new FormData();
     body.append("file", file);
+    body.append("account", account.trim());
 
     try {
       const res = await fetch("/api/import", { method: "POST", body });
-      const json = await res.json();
+      const json = (await res.json()) as ImportResult & {
+        error?: string;
+        code?: string;
+      };
+
       if (!res.ok) {
-        if ((json as { code?: string }).code === "LIMIT_REACHED") {
+        if (json.code === "LIMIT_REACHED") {
           setLimitReached(true);
           setStep("idle");
         } else {
@@ -86,7 +118,13 @@ export default function CsvImportModal({
         }
         return;
       }
-      setTransactions(json.transactions as CategorizedTransaction[]);
+
+      setImportResult({
+        transactions: json.transactions,
+        duplicateCount: json.duplicateCount,
+        duplicates: json.duplicates,
+        potentialTransfers: json.potentialTransfers,
+      });
       setStep("review");
     } catch {
       setError("Network error — please try again.");
@@ -109,6 +147,18 @@ export default function CsvImportModal({
       return;
     }
 
+    if (reviewed.length === 0) {
+      // All were duplicates — nothing to insert
+      if (account.trim()) saveAccount(account.trim());
+      setStep("done");
+      setTimeout(() => {
+        setOpen(false);
+        setTimeout(reset, 200);
+        router.refresh();
+      }, 1800);
+      return;
+    }
+
     const rows = reviewed.map((t) => ({
       user_id: user.id,
       amount: t.amount,
@@ -116,6 +166,9 @@ export default function CsvImportModal({
       category: t.category,
       description: t.description,
       date: t.date,
+      account: t.account || null,
+      original_description: t.originalDescription || null,
+      import_hash: t.importHash || null,
     }));
 
     const { error } = await supabase.from("transactions").insert(rows);
@@ -125,6 +178,7 @@ export default function CsvImportModal({
       return;
     }
 
+    if (account.trim()) saveAccount(account.trim());
     markInsightsStale();
     setStep("done");
     setTimeout(() => {
@@ -134,6 +188,8 @@ export default function CsvImportModal({
     }, 1800);
   }
 
+  const savedCount = importResult?.transactions.length ?? 0;
+  const dupCount = importResult?.duplicateCount ?? 0;
   const wide = step === "review" || step === "saving";
 
   return (
@@ -176,7 +232,6 @@ export default function CsvImportModal({
                   </button>
                 </div>
 
-                {/* Limit reached — upgrade CTA */}
                 {(atLimit || limitReached) ? (
                   <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-5 text-center">
                     <p className="text-sm font-semibold text-zinc-100">Monthly limit reached</p>
@@ -195,6 +250,32 @@ export default function CsvImportModal({
                         {FREE_LIMIT - importsUsed} of {FREE_LIMIT} free imports remaining this month
                       </p>
                     )}
+
+                    {/* Account selector */}
+                    <div className="mb-4">
+                      <label className="mb-1.5 block text-sm font-medium text-zinc-300">
+                        Account{" "}
+                        <span className="font-normal text-zinc-500">(optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        list="recent-accounts"
+                        value={account}
+                        onChange={(e) => setAccount(e.target.value)}
+                        placeholder="e.g. Chase Checking, Revolut EUR"
+                        className="w-full rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm text-zinc-50 placeholder-zinc-500 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                      />
+                      {recentAccounts.length > 0 && (
+                        <datalist id="recent-accounts">
+                          {recentAccounts.map((a) => (
+                            <option key={a} value={a} />
+                          ))}
+                        </datalist>
+                      )}
+                      <p className="mt-1 text-xs text-zinc-600">
+                        Helps detect duplicate transfers between your accounts
+                      </p>
+                    </div>
 
                     {/* Drop zone */}
                     <div
@@ -274,7 +355,7 @@ export default function CsvImportModal({
             )}
 
             {/* ── Review / Saving ── */}
-            {(step === "review" || step === "saving") && (
+            {(step === "review" || step === "saving") && importResult && (
               <div>
                 <div className="mb-5 flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-zinc-50">Review import</h2>
@@ -289,7 +370,10 @@ export default function CsvImportModal({
                   </button>
                 </div>
                 <CsvReviewTable
-                  transactions={transactions}
+                  transactions={importResult.transactions}
+                  duplicateCount={importResult.duplicateCount}
+                  duplicates={importResult.duplicates}
+                  potentialTransfers={importResult.potentialTransfers}
                   saving={step === "saving"}
                   saveError={saveError}
                   onSave={handleSave}
@@ -308,7 +392,11 @@ export default function CsvImportModal({
                 </div>
                 <h3 className="mt-4 text-lg font-semibold text-zinc-50">Imported!</h3>
                 <p className="mt-2 text-sm text-zinc-400">
-                  {transactions.length} transactions added to your dashboard.
+                  {savedCount > 0 && <>{savedCount} transaction{savedCount !== 1 ? "s" : ""} added</>}
+                  {savedCount > 0 && dupCount > 0 && ", "}
+                  {dupCount > 0 && <>{dupCount} duplicate{dupCount !== 1 ? "s" : ""} skipped</>}
+                  {savedCount === 0 && dupCount === 0 && "Nothing new to import."}
+                  .
                 </p>
               </div>
             )}

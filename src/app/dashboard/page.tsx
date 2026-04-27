@@ -14,6 +14,7 @@ import InsightsPanel from "@/src/components/InsightsPanel";
 import ExportPdfButton from "@/src/components/ExportPdfButton";
 import UpgradeButton from "@/src/components/UpgradeButton";
 import UpgradeSuccessToast from "@/src/components/UpgradeSuccessToast";
+import AccountFilter from "@/src/components/AccountFilter";
 
 function getMonthBounds(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString().split("T")[0];
@@ -30,7 +31,7 @@ function formatCurrency(amount: number, sign = true) {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ upgraded?: string }>;
+  searchParams: Promise<{ upgraded?: string; account?: string }>;
 }) {
   const supabase = await createClient();
   const {
@@ -62,14 +63,33 @@ export default async function DashboardPage({
 
   const allTransactions = (transactions ?? []) as Transaction[];
 
+  // Distinct accounts for filter tabs (only accounts that have been named)
+  const distinctAccounts = [
+    ...new Set(
+      allTransactions.map((t) => t.account).filter((a): a is string => !!a)
+    ),
+  ].sort();
+
+  const params = await searchParams;
+  const accountFilter = params.account ?? null;
+  const showUpgradeToast = params.upgraded === "true";
+
+  // Apply account filter
+  const filteredTransactions = accountFilter
+    ? allTransactions.filter((t) => t.account === accountFilter)
+    : allTransactions;
+
   const now = new Date();
   const { start, end } = getMonthBounds(now.getFullYear(), now.getMonth());
 
-  const monthTransactions = allTransactions.filter(
+  const monthTransactions = filteredTransactions.filter(
     (tr) => tr.date >= start && tr.date <= end
   );
-  const monthExpenses = monthTransactions.filter((tr) => tr.type === "expense");
 
+  // Exclude Transfer category from spending calculations
+  const monthExpenses = monthTransactions.filter(
+    (tr) => tr.type === "expense" && tr.category !== "Transfer"
+  );
   const totalSpent = monthExpenses.reduce((s, tr) => s + Number(tr.amount), 0);
   const totalIncome = monthTransactions
     .filter((tr) => tr.type === "income")
@@ -96,17 +116,20 @@ export default async function DashboardPage({
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
     const { start: ms, end: me } = getMonthBounds(d.getFullYear(), d.getMonth());
-    const amount = allTransactions
-      .filter((tr) => tr.type === "expense" && tr.date >= ms && tr.date <= me)
+    const amount = filteredTransactions
+      .filter(
+        (tr) =>
+          tr.type === "expense" &&
+          tr.category !== "Transfer" &&
+          tr.date >= ms &&
+          tr.date <= me
+      )
       .reduce((s, tr) => s + Number(tr.amount), 0);
     return { month: d.toLocaleString(intlLocale, { month: "short" }), amount };
   });
 
   const monthLabel = now.toLocaleString(intlLocale, { month: "long", year: "numeric" });
   const currentMonthSlug = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-
-  const params = await searchParams;
-  const showUpgradeToast = params.upgraded === "true";
 
   return (
     <div>
@@ -125,6 +148,16 @@ export default async function DashboardPage({
           <AddTransactionModal />
         </div>
       </div>
+
+      {/* Account filter */}
+      {distinctAccounts.length > 0 && (
+        <div className="mb-6">
+          <AccountFilter
+            accounts={distinctAccounts}
+            currentAccount={accountFilter}
+          />
+        </div>
+      )}
 
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/50 p-5">
@@ -151,7 +184,10 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <InsightsPanel totalTransactions={allTransactions.length} isPro={isPro} />
+      <InsightsPanel
+        totalTransactions={filteredTransactions.length}
+        isPro={isPro}
+      />
 
       <div className="mb-8">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
@@ -175,7 +211,7 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <TransactionList transactions={allTransactions} />
+      <TransactionList transactions={filteredTransactions} />
 
       {limits && null}
     </div>

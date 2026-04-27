@@ -5,7 +5,6 @@ import { createClient } from "@/src/lib/supabase/client";
 import type { Transaction } from "@/src/types/transaction";
 
 function formatDate(dateStr: string) {
-  // Append time to avoid UTC-to-local shift on date-only strings
   return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -34,9 +33,7 @@ export default function TransactionList({
   if (transactions.length === 0) {
     return (
       <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/30 px-6 py-16 text-center">
-        <p className="text-zinc-400">
-          No transactions yet. Add your first one!
-        </p>
+        <p className="text-zinc-400">No transactions yet. Add your first one!</p>
       </div>
     );
   }
@@ -50,7 +47,9 @@ export default function TransactionList({
         {transactions.map((t) => (
           <div
             key={t.id}
-            className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-800/30"
+            className={`flex items-center gap-4 px-5 py-4 transition-colors hover:bg-zinc-800/30 ${
+              t.category === "Transfer" ? "opacity-70" : ""
+            }`}
           >
             {/* Date */}
             <span className="w-14 shrink-0 text-sm text-zinc-500">
@@ -58,9 +57,16 @@ export default function TransactionList({
             </span>
 
             {/* Description / Category */}
-            <span className="flex-1 truncate text-sm text-zinc-200">
-              {t.description || t.category}
-            </span>
+            <div className="min-w-0 flex-1">
+              <span className="block truncate text-sm text-zinc-200">
+                {t.description || t.category}
+              </span>
+              {t.account && (
+                <span className="mt-0.5 block truncate text-xs text-zinc-600">
+                  {t.account}
+                </span>
+              )}
+            </div>
 
             {/* Category badge */}
             <span className="hidden rounded-full border border-zinc-700/50 bg-zinc-800 px-2.5 py-0.5 text-xs font-medium text-zinc-400 sm:block">
@@ -70,7 +76,11 @@ export default function TransactionList({
             {/* Amount */}
             <span
               className={`w-24 shrink-0 text-right text-sm font-semibold tabular-nums ${
-                t.type === "expense" ? "text-red-400" : "text-emerald-400"
+                t.category === "Transfer"
+                  ? "text-zinc-500"
+                  : t.type === "expense"
+                  ? "text-red-400"
+                  : "text-emerald-400"
               }`}
             >
               {formatAmount(t)}

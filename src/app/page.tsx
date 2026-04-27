@@ -1,16 +1,16 @@
 import Link from "next/link";
 
 const banks = [
-  "Chase",
-  "Bank of America",
-  "Wells Fargo",
-  "Revolut",
-  "Wise",
-  "Citibank",
-  "HSBC",
-  "Barclays",
-  "N26",
-  "Monzo",
+  { name: "Chase", slug: "chase" },
+  { name: "Bank of America", slug: "bank-of-america" },
+  { name: "Wells Fargo", slug: "wells-fargo" },
+  { name: "Revolut", slug: "revolut" },
+  { name: "Wise", slug: "wise" },
+  { name: "Citi", slug: "citi" },
+  { name: "HSBC", slug: "hsbc" },
+  { name: "Barclays", slug: "barclays" },
+  { name: "N26", slug: "n26" },
+  { name: "Monzo", slug: "monzo" },
 ];
 
 const features = [
@@ -302,16 +302,20 @@ export default function Home() {
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {banks.map((bank) => (
-                <span
-                  key={bank}
-                  className="rounded-full border border-zinc-700/50 bg-zinc-800/50 px-3 py-1 text-xs font-medium text-zinc-400"
+                <Link
+                  key={bank.slug}
+                  href={`/banks/${bank.slug}`}
+                  className="rounded-full border border-zinc-700/50 bg-zinc-800/50 px-3 py-1 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-200"
                 >
-                  {bank}
-                </span>
+                  {bank.name}
+                </Link>
               ))}
-              <span className="rounded-full border border-zinc-700/50 bg-zinc-800/50 px-3 py-1 text-xs font-medium text-zinc-400">
-                +100 more
-              </span>
+              <Link
+                href="/banks"
+                className="rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-xs font-medium text-cyan-400 transition-colors hover:bg-cyan-400/10"
+              >
+                See all supported banks →
+              </Link>
             </div>
           </div>
         </section>

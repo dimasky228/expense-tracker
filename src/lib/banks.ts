@@ -5,6 +5,7 @@ export type Bank = {
   flag: string;
   csvColumns: string;
   steps: string[];
+  stepsRu?: string[];
   tips: string;
   exportLocation: string;
   dateRange: string;
@@ -29,6 +30,15 @@ export const banks: Bank[] = [
       "Click 'Download' — the file saves as your account ending in .CSV",
       "Upload the downloaded CSV to ExpenseAI",
     ],
+    stepsRu: [
+      "Войдите на chase.com или откройте мобильное приложение Chase",
+      "Выберите расчётный счёт или кредитную карту для экспорта",
+      "Нажмите на иконку загрузки (стрелка вниз) рядом со списком транзакций",
+      "В диалоге 'Download Account Activity' выберите нужный диапазон дат",
+      "Выберите формат 'CSV' (не Quicken и не QuickBooks)",
+      "Нажмите 'Download' — файл сохранится с расширением .CSV",
+      "Загрузите скачанный CSV в ExpenseAI",
+    ],
     tips:
       "Chase's CSV includes its own Category column, but ExpenseAI's AI categorization is more accurate and consistent across merchants. You can safely ignore Chase's built-in categories — ExpenseAI will override them.",
   },
@@ -49,6 +59,15 @@ export const banks: Bank[] = [
       "Click 'Download Transactions'",
       "Upload the downloaded file to ExpenseAI",
     ],
+    stepsRu: [
+      "Войдите на bankofamerica.com или в мобильное приложение BofA",
+      "На обзорной странице счетов нажмите на нужный счёт",
+      "Нажмите 'Download' в правом верхнем углу списка транзакций",
+      "Выберите диапазон дат — можно выбрать до 18 месяцев",
+      "В поле 'File type' выберите 'CSV format'",
+      "Нажмите 'Download Transactions'",
+      "Загрузите скачанный файл в ExpenseAI",
+    ],
     tips:
       "Bank of America's CSV uses a simple four-column format. Negative amounts are expenses, positive are credits. ExpenseAI handles this automatically.",
   },
@@ -68,6 +87,15 @@ export const banks: Bank[] = [
       "Choose 'Comma Separated Values (CSV)' as the file format",
       "Click 'Download'",
       "Upload the file to ExpenseAI",
+    ],
+    stepsRu: [
+      "Войдите на wellsfargo.com",
+      "В разделе 'Account Summary' выберите нужный счёт",
+      "На странице 'Account Activity' нажмите 'Download Account Activity' (верхний правый угол)",
+      "Выберите диапазон дат для экспорта",
+      "Выберите формат 'Comma Separated Values (CSV)'",
+      "Нажмите 'Download'",
+      "Загрузите файл в ExpenseAI",
     ],
     tips:
       "Wells Fargo CSV has some blank columns — ExpenseAI ignores those automatically and reads the Date, Amount, and Description columns correctly.",
@@ -90,6 +118,16 @@ export const banks: Bank[] = [
       "Click 'Download' and save the file",
       "Upload to ExpenseAI",
     ],
+    stepsRu: [
+      "Войдите на citibank.com",
+      "Перейдите к нужному счёту",
+      "Нажмите 'Account Details', затем вкладку 'Transactions'",
+      "Нажмите 'Download' справа от списка транзакций",
+      "Выберите диапазон дат",
+      "Выберите формат 'CSV'",
+      "Нажмите 'Download' и сохраните файл",
+      "Загрузите в ExpenseAI",
+    ],
     tips:
       "Citi separates debits and credits into two columns instead of one. ExpenseAI handles this split automatically and combines them into a single amount field.",
   },
@@ -109,6 +147,15 @@ export const banks: Bank[] = [
       "Select your desired date range",
       "Click 'Download'",
       "Upload the CSV to ExpenseAI",
+    ],
+    stepsRu: [
+      "Войдите на capitalone.com",
+      "Выберите счёт или кредитную карту для экспорта",
+      "Нажмите 'Download Transactions' в разделе активности счёта",
+      "Выберите формат файла 'CSV'",
+      "Выберите нужный диапазон дат",
+      "Нажмите 'Download'",
+      "Загрузите CSV в ExpenseAI",
     ],
     tips:
       "Capital One includes a Category column from their own system. ExpenseAI will re-categorize using AI for higher accuracy — especially useful for travel rewards cards with complex merchant names.",
@@ -130,6 +177,16 @@ export const banks: Bank[] = [
       "Select your date range",
       "Click 'Download' to save the file",
       "Upload to ExpenseAI",
+    ],
+    stepsRu: [
+      "Войдите на americanexpress.com",
+      "Нажмите 'Statements & Activity' в верхнем меню",
+      "Если карт несколько — выберите нужную",
+      "Нажмите 'Download' (иконка стрелки вверху списка транзакций)",
+      "Выберите формат 'CSV'",
+      "Укажите диапазон дат",
+      "Нажмите 'Download' для сохранения файла",
+      "Загрузите в ExpenseAI",
     ],
     tips:
       "Amex CSV contains very detailed merchant data including address and category. ExpenseAI uses this extra information to improve categorization accuracy for international transactions.",
@@ -155,6 +212,17 @@ export const banks: Bank[] = [
       "Tap 'Generate Statement' — Revolut emails it to you within minutes",
       "Download from your email and upload to ExpenseAI",
     ],
+    stepsRu: [
+      "Откройте приложение Revolut на смартфоне",
+      "Нажмите на иконку профиля в левом верхнем углу",
+      "Прокрутите вниз и нажмите 'Документы'",
+      "Нажмите 'Выписка'",
+      "Выберите счёт (например, Основной, Сберегательный, Крипто) и валюту",
+      "Укажите произвольный диапазон дат",
+      "Выберите формат 'Excel' или 'CSV'",
+      "Нажмите 'Создать выписку' — Revolut отправит её на email за несколько минут",
+      "Скачайте файл из письма и загрузите в ExpenseAI",
+    ],
     tips:
       "Revolut sends statements via email. If you have multiple currency pockets, export each separately. ExpenseAI will normalize all currencies to your chosen base currency during import.",
   },
@@ -174,6 +242,15 @@ export const banks: Bank[] = [
       "Click 'Download' and select 'CSV'",
       "Repeat for each currency balance if needed",
       "Upload the CSV file(s) to ExpenseAI",
+    ],
+    stepsRu: [
+      "Войдите на wise.com (рекомендуется с компьютера)",
+      "Выберите счёт в нужной валюте (например, USD, EUR, RUB)",
+      "Нажмите 'Statement' в левой боковой панели",
+      "Выберите диапазон дат",
+      "Нажмите 'Download' и выберите 'CSV'",
+      "Повторите для каждой валюты при необходимости",
+      "Загрузите CSV-файл(ы) в ExpenseAI",
     ],
     tips:
       "Wise generates a separate CSV per currency account. If you actively use multiple currencies, export each one separately. ExpenseAI handles multi-currency statements and will flag exchange transactions.",
@@ -195,6 +272,15 @@ export const banks: Bank[] = [
       "Choose 'CSV' format",
       "Save the file and upload it to ExpenseAI",
     ],
+    stepsRu: [
+      "Войдите в веб-приложение N26 на app.n26.com (мобильное приложение не поддерживает экспорт CSV)",
+      "Нажмите на основной счёт",
+      "Перейдите в 'Statements' в левой панели",
+      "Выберите месяц или произвольный диапазон дат",
+      "Нажмите на иконку скачивания рядом с периодом",
+      "Выберите формат 'CSV'",
+      "Сохраните файл и загрузите его в ExpenseAI",
+    ],
     tips:
       "N26 CSV export is only available via the web app — the mobile app shows PDF only. For best results, use the N26 web app on desktop.",
   },
@@ -215,6 +301,16 @@ export const banks: Bank[] = [
       "Choose your date range and tap 'Export to CSV'",
       "Monzo emails you the CSV — download from your email",
       "Upload to ExpenseAI",
+    ],
+    stepsRu: [
+      "Откройте приложение Monzo на смартфоне",
+      "Нажмите вкладку Profile (иконка человека) в правом нижнем углу",
+      "Прокрутите вниз и нажмите 'Help'",
+      "В строке поиска введите 'Export transactions'",
+      "Откройте статью 'Export transactions' и перейдите по ссылке 'export'",
+      "Выберите диапазон дат и нажмите 'Export to CSV'",
+      "Monzo отправит CSV на ваш email — скачайте из письма",
+      "Загрузите в ExpenseAI",
     ],
     tips:
       "Monzo's CSV includes merchant names, notes, and hashtag categories you've set. ExpenseAI combines this data with AI categorization for excellent results — especially useful for Monzo Pots spending.",
@@ -238,6 +334,15 @@ export const banks: Bank[] = [
       "Select 'CSV' or 'Comma Separated Values' as the format",
       "Save the file and upload it to ExpenseAI",
     ],
+    stepsRu: [
+      "Войдите на hsbc.com или региональный портал интернет-банка HSBC",
+      "Выберите счёт в разделе 'My Accounts'",
+      "Нажмите 'View Transactions'",
+      "Установите диапазон дат с помощью фильтра",
+      "Нажмите 'Export' или 'Download' (название зависит от региона)",
+      "Выберите формат 'CSV' или 'Comma Separated Values'",
+      "Сохраните файл и загрузите его в ExpenseAI",
+    ],
     tips:
       "HSBC's interface varies by country (UK, US, Hong Kong, etc). The export option is typically under the transaction list. If you see 'Export to spreadsheet', that's the right option — it downloads as CSV.",
   },
@@ -258,6 +363,16 @@ export const banks: Bank[] = [
       "Select 'CSV' format",
       "Click 'Export' to download",
       "Upload the file to ExpenseAI",
+    ],
+    stepsRu: [
+      "Войдите на barclays.co.uk через браузер на компьютере",
+      "Выберите счёт в разделе 'My accounts'",
+      "Нажмите 'Statements and older transactions'",
+      "Выберите период выписки или укажите произвольный диапазон дат",
+      "Нажмите 'Export transactions' (внизу страницы)",
+      "Выберите формат 'CSV'",
+      "Нажмите 'Export' для скачивания",
+      "Загрузите файл в ExpenseAI",
     ],
     tips:
       "Barclays sometimes exports dates in DD/MM/YYYY format. ExpenseAI automatically detects and converts UK date formats, so no manual editing is needed.",
@@ -282,6 +397,16 @@ export const banks: Bank[] = [
       "Click 'Export' to download",
       "Upload to ExpenseAI",
     ],
+    stepsRu: [
+      "Войдите в NetBank на netbank.commbank.com.au",
+      "Выберите счёт в разделе 'My accounts'",
+      "Перейдите на вкладку 'Transactions'",
+      "Выберите нужный период с помощью фильтра дат",
+      "Нажмите 'Export' (верхний правый угол списка транзакций)",
+      "В выпадающем списке форматов выберите 'CSV'",
+      "Нажмите 'Export' для скачивания",
+      "Загрузите в ExpenseAI",
+    ],
     tips:
       "CommBank CSV uses a clean four-column format. The Description field often includes BSB/account references for transfers — ExpenseAI filters these to identify true expense categories.",
   },
@@ -304,6 +429,15 @@ export const banks: Bank[] = [
       "Click 'Download'",
       "Upload the CSV to ExpenseAI",
     ],
+    stepsRu: [
+      "Войдите в EasyWeb на easywebv2.td.com или tdcanadatrust.com",
+      "Выберите счёт в разделе 'My Accounts'",
+      "Нажмите 'Download Activity' в действиях по счёту",
+      "Выберите диапазон дат",
+      "Выберите формат 'CSV (Comma-separated values)'",
+      "Нажмите 'Download'",
+      "Загрузите CSV в ExpenseAI",
+    ],
     tips:
       "TD Bank splits descriptions into two columns (Description 1 and Description 2). ExpenseAI combines them automatically for the best merchant name detection.",
   },
@@ -324,6 +458,16 @@ export const banks: Bank[] = [
       "Select 'CSV' as the format",
       "Click 'Export' and save the file",
       "Upload to ExpenseAI",
+    ],
+    stepsRu: [
+      "Войдите на scotiabank.com через браузер на компьютере",
+      "Выберите счёт в меню 'Accounts'",
+      "Нажмите 'Transaction History'",
+      "Установите диапазон дат с помощью фильтра",
+      "Нажмите 'Export' или 'Download Transactions'",
+      "Выберите формат 'CSV'",
+      "Нажмите 'Export' и сохраните файл",
+      "Загрузите в ExpenseAI",
     ],
     tips:
       "Scotiabank uses separate Withdrawals and Deposits columns. ExpenseAI combines these into a single signed amount automatically during import.",

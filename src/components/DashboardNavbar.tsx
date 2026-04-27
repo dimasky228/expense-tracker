@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/src/lib/supabase/client";
+import LanguageSwitcher from "@/src/components/LanguageSwitcher";
 
 type Props = {
   email: string;
@@ -11,6 +13,9 @@ type Props = {
 };
 
 export default function DashboardNavbar({ email, isPro, hasStripeCustomer }: Props) {
+  const t = useTranslations("common");
+  const tDash = useTranslations("dashboard");
+  const locale = useLocale();
   const router = useRouter();
 
   async function handleSignOut() {
@@ -39,32 +44,33 @@ export default function DashboardNavbar({ email, isPro, hasStripeCustomer }: Pro
           Expense<span className="text-cyan-400">AI</span>
         </Link>
         <div className="flex items-center gap-4">
+          <LanguageSwitcher locale={locale} />
           <div className="hidden items-center gap-2 sm:flex">
             <span className="text-sm text-zinc-400">{email}</span>
             {isPro ? (
               <>
                 <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-xs font-semibold text-cyan-400">
-                  Pro
+                  {t("pro")}
                 </span>
                 {hasStripeCustomer && (
                   <button
                     onClick={handleManage}
                     className="text-xs text-zinc-500 underline-offset-2 hover:text-zinc-300 hover:underline"
                   >
-                    Manage
+                    {tDash("manageSubscription")}
                   </button>
                 )}
               </>
             ) : (
               <>
                 <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs font-semibold text-zinc-400">
-                  Free
+                  {t("free")}
                 </span>
                 <button
                   onClick={handleUpgrade}
                   className="text-xs font-medium text-cyan-400 underline-offset-2 hover:underline"
                 >
-                  Upgrade
+                  {t("upgrade")}
                 </button>
               </>
             )}
@@ -73,7 +79,7 @@ export default function DashboardNavbar({ email, isPro, hasStripeCustomer }: Pro
             onClick={handleSignOut}
             className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-400 transition-colors hover:border-zinc-500 hover:text-zinc-50"
           >
-            Sign out
+            {t("signOut")}
           </button>
         </div>
       </nav>

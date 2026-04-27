@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations, getLocale } from "next-intl/server";
 import { createClient } from "@/src/lib/supabase/server";
 import { getSubscription, isPro as checkIsPro, getUsageLimits } from "@/src/lib/subscription";
 import { getImportCount, currentMonth } from "@/src/lib/usage";
@@ -38,7 +39,11 @@ export default async function DashboardPage({
 
   if (!user) redirect("/login");
 
-  // Fetch subscription + usage in parallel
+  const [t, locale] = await Promise.all([
+    getTranslations("dashboard"),
+    getLocale(),
+  ]);
+
   const month = currentMonth();
   const [sub, importsUsed] = await Promise.all([
     getSubscription(user.id),
@@ -61,19 +66,19 @@ export default async function DashboardPage({
   const { start, end } = getMonthBounds(now.getFullYear(), now.getMonth());
 
   const monthTransactions = allTransactions.filter(
-    (t) => t.date >= start && t.date <= end
+    (tr) => tr.date >= start && tr.date <= end
   );
-  const monthExpenses = monthTransactions.filter((t) => t.type === "expense");
+  const monthExpenses = monthTransactions.filter((tr) => tr.type === "expense");
 
-  const totalSpent = monthExpenses.reduce((s, t) => s + Number(t.amount), 0);
+  const totalSpent = monthExpenses.reduce((s, tr) => s + Number(tr.amount), 0);
   const totalIncome = monthTransactions
-    .filter((t) => t.type === "income")
-    .reduce((s, t) => s + Number(t.amount), 0);
+    .filter((tr) => tr.type === "income")
+    .reduce((s, tr) => s + Number(tr.amount), 0);
   const net = totalIncome - totalSpent;
 
   const catMap = monthExpenses.reduce(
-    (acc, t) => {
-      acc[t.category] = (acc[t.category] ?? 0) + Number(t.amount);
+    (acc, tr) => {
+      acc[tr.category] = (acc[tr.category] ?? 0) + Number(tr.amount);
       return acc;
     },
     {} as Record<string, number>
@@ -86,17 +91,18 @@ export default async function DashboardPage({
     }))
     .sort((a, b) => b.amount - a.amount);
 
-  const currentMonthShort = now.toLocaleString("en-US", { month: "short" });
+  const intlLocale = locale === "ru" ? "ru-RU" : "en-US";
+  const currentMonthShort = now.toLocaleString(intlLocale, { month: "short" });
   const monthlyData = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
     const { start: ms, end: me } = getMonthBounds(d.getFullYear(), d.getMonth());
     const amount = allTransactions
-      .filter((t) => t.type === "expense" && t.date >= ms && t.date <= me)
-      .reduce((s, t) => s + Number(t.amount), 0);
-    return { month: d.toLocaleString("en-US", { month: "short" }), amount };
+      .filter((tr) => tr.type === "expense" && tr.date >= ms && tr.date <= me)
+      .reduce((s, tr) => s + Number(tr.amount), 0);
+    return { month: d.toLocaleString(intlLocale, { month: "short" }), amount };
   });
 
-  const monthLabel = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+  const monthLabel = now.toLocaleString(intlLocale, { month: "long", year: "numeric" });
   const currentMonthSlug = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   const params = await searchParams;
@@ -104,44 +110,37 @@ export default async function DashboardPage({
 
   return (
     <div>
-      {/* Upgrade success toast */}
       <UpgradeSuccessToast show={showUpgradeToast} />
 
-      {/* Upgrade banner for free users */}
       {!isPro && <UpgradeButton variant="banner" />}
 
-      {/* Header */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-50">{monthLabel}</h1>
-          <p className="mt-1 text-sm text-zinc-400">Monthly overview</p>
+          <p className="mt-1 text-sm text-zinc-400">{t("monthlyOverview")}</p>
         </div>
         <div className="flex items-center gap-3">
           <ExportPdfButton month={currentMonthSlug} isPro={isPro} />
-          <CsvImportModal
-            isPro={isPro}
-            importsUsed={importsUsed}
-          />
+          <CsvImportModal isPro={isPro} importsUsed={importsUsed} />
           <AddTransactionModal />
         </div>
       </div>
 
-      {/* Summary cards */}
       <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/50 p-5">
-          <p className="text-sm text-zinc-400">Total spent</p>
+          <p className="text-sm text-zinc-400">{t("totalSpent")}</p>
           <p className="mt-1 text-2xl font-bold text-red-400">
             {formatCurrency(-totalSpent)}
           </p>
         </div>
         <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/50 p-5">
-          <p className="text-sm text-zinc-400">Total income</p>
+          <p className="text-sm text-zinc-400">{t("totalIncome")}</p>
           <p className="mt-1 text-2xl font-bold text-emerald-400">
             {formatCurrency(totalIncome)}
           </p>
         </div>
         <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/50 p-5">
-          <p className="text-sm text-zinc-400">Net</p>
+          <p className="text-sm text-zinc-400">{t("net")}</p>
           <p
             className={`mt-1 text-2xl font-bold ${
               net >= 0 ? "text-emerald-400" : "text-red-400"
@@ -152,39 +151,32 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      {/* AI Insights */}
-      <InsightsPanel
-        totalTransactions={allTransactions.length}
-        isPro={isPro}
-      />
+      <InsightsPanel totalTransactions={allTransactions.length} isPro={isPro} />
 
-      {/* Analytics */}
       <div className="mb-8">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-          Analytics
+          {t("analytics")}
         </h2>
 
         <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="mb-4 text-sm font-semibold text-zinc-300">Spending by Category</p>
+            <p className="mb-4 text-sm font-semibold text-zinc-300">{t("spendingByCategory")}</p>
             <SpendingByCategory data={categoryData} />
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-            <p className="mb-4 text-sm font-semibold text-zinc-300">Monthly Trend</p>
+            <p className="mb-4 text-sm font-semibold text-zinc-300">{t("monthlyTrend")}</p>
             <MonthlyTrend data={monthlyData} currentMonth={currentMonthShort} />
           </div>
         </div>
 
         <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
-          <p className="mb-4 text-sm font-semibold text-zinc-300">Top Spending</p>
+          <p className="mb-4 text-sm font-semibold text-zinc-300">{t("topSpending")}</p>
           <TopSpending data={categoryData.slice(0, 5)} />
         </div>
       </div>
 
-      {/* Transaction list */}
       <TransactionList transactions={allTransactions} />
 
-      {/* Suppress unused var warning */}
       {limits && null}
     </div>
   );

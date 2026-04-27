@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/src/lib/supabase/client";
+import LanguageSwitcher from "@/src/components/LanguageSwitcher";
 
 export default function SignupPage() {
+  const t = useTranslations("auth");
+  const locale = useLocale();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,11 +32,9 @@ export default function SignupPage() {
     }
 
     if (data.session) {
-      // Auto-confirmed (e.g. local dev) — go straight to dashboard
       router.push("/dashboard");
       router.refresh();
     } else {
-      // Email confirmation required
       setConfirmationSent(true);
       setLoading(false);
     }
@@ -62,17 +64,15 @@ export default function SignupPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-zinc-50">Check your email</h2>
+            <h2 className="text-lg font-semibold text-zinc-50">{t("checkEmailTitle")}</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              We sent a confirmation link to{" "}
-              <span className="text-zinc-200">{email}</span>. Click it to
-              activate your account.
+              {t("checkEmailDesc", { email })}
             </p>
           </div>
           <p className="mt-6 text-sm text-zinc-500">
-            Already confirmed?{" "}
+            {t("alreadyConfirmed")}{" "}
             <Link href="/login" className="text-cyan-400 hover:text-cyan-300">
-              Sign in
+              {t("signIn")}
             </Link>
           </p>
         </div>
@@ -84,11 +84,14 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
+          <div className="mb-4 flex justify-end">
+            <LanguageSwitcher locale={locale} />
+          </div>
           <Link href="/" className="text-2xl font-bold text-zinc-50">
             Expense<span className="text-cyan-400">AI</span>
           </Link>
-          <h1 className="mt-6 text-2xl font-bold text-zinc-50">Create account</h1>
-          <p className="mt-2 text-sm text-zinc-400">Free forever, no card required</p>
+          <h1 className="mt-6 text-2xl font-bold text-zinc-50">{t("signupTitle")}</h1>
+          <p className="mt-2 text-sm text-zinc-400">{t("signupSubtitle")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -97,7 +100,7 @@ export default function SignupPage() {
               htmlFor="email"
               className="mb-1.5 block text-sm font-medium text-zinc-300"
             >
-              Email
+              {t("email")}
             </label>
             <input
               id="email"
@@ -106,7 +109,7 @@ export default function SignupPage() {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t("emailPlaceholder")}
               className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-50 placeholder-zinc-500 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
             />
           </div>
@@ -115,7 +118,7 @@ export default function SignupPage() {
               htmlFor="password"
               className="mb-1.5 block text-sm font-medium text-zinc-300"
             >
-              Password
+              {t("password")}
             </label>
             <input
               id="password"
@@ -125,7 +128,7 @@ export default function SignupPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min 6 characters"
+              placeholder={t("passwordNew")}
               className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm text-zinc-50 placeholder-zinc-500 focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
             />
           </div>
@@ -141,14 +144,14 @@ export default function SignupPage() {
             disabled={loading}
             className="w-full rounded-xl bg-cyan-400 px-6 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Creating account…" : "Create account"}
+            {loading ? t("signupButtonLoading") : t("signupButton")}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-zinc-500">
-          Already have an account?{" "}
+          {t("hasAccount")}{" "}
           <Link href="/login" className="text-cyan-400 hover:text-cyan-300">
-            Sign in
+            {t("signIn")}
           </Link>
         </p>
       </div>

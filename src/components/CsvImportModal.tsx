@@ -58,6 +58,12 @@ export default function CsvImportModal({
     if (open) setRecentAccounts(loadRecentAccounts());
   }, [open]);
 
+  useEffect(() => {
+    function handleOpenImport() { setOpen(true); }
+    window.addEventListener("openImport", handleOpenImport);
+    return () => window.removeEventListener("openImport", handleOpenImport);
+  }, []);
+
   function reset() {
     setStep("idle");
     setFile(null);
@@ -213,8 +219,10 @@ export default function CsvImportModal({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className={`w-full rounded-t-2xl border border-zinc-700/50 bg-zinc-900 p-6 sm:rounded-2xl ${
-              wide ? "max-w-4xl" : "max-w-md"
+            className={`w-full overflow-y-auto rounded-t-2xl border border-zinc-700/50 bg-zinc-900 p-5 sm:rounded-2xl sm:p-6 ${
+              wide
+                ? "max-h-[95dvh] sm:max-w-4xl"
+                : "max-h-[92dvh] sm:max-h-none sm:max-w-md"
             }`}
           >
             {/* ── Idle / Loading ── */}

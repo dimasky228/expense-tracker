@@ -115,7 +115,7 @@ export default function AddTransactionModal() {
           onClick={handleClose}
         >
           <div
-            className="w-full max-w-md rounded-t-2xl border border-zinc-700/50 bg-zinc-900 p-6 sm:rounded-2xl"
+            className="w-full max-h-[92dvh] overflow-y-auto rounded-t-2xl border border-zinc-700/50 bg-zinc-900 p-5 sm:max-h-none sm:max-w-md sm:rounded-2xl sm:p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-5 flex items-center justify-between">

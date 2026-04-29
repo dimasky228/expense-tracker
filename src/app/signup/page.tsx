@@ -33,7 +33,7 @@ export default function SignupPage() {
     }
 
     if (data.session) {
-      router.push("/dashboard");
+      router.push("/dashboard/onboarding");
       router.refresh();
     } else {
       setConfirmationSent(true);

@@ -211,6 +211,38 @@
     "Investment": "Инвестиции",
     "Other": "Прочее"
   },
+  "onboarding": {
+    "step1Title": "Добро пожаловать в ExpenseAI!",
+    "step1Subtitle": "Настроим трекер за 30 секунд",
+    "step1Button": "Начать →",
+    "step2Title": "Какую валюту вы используете?",
+    "step2Subtitle": "Суммы будут отображаться в выбранной валюте",
+    "step2Other": "Другая валюта",
+    "step2OtherPlaceholder": "например CHF, DKK, SGD",
+    "step2Next": "Продолжить",
+    "step3Title": "Как хотите начать?",
+    "step3Subtitle": "Это можно изменить в любой момент",
+    "step3OptionA": "Загрузить выписку",
+    "step3OptionADesc": "Импортировать CSV из банка — лучший старт",
+    "step3OptionB": "Добавить вручную",
+    "step3OptionBDesc": "Добавить первую транзакцию самостоятельно",
+    "step3OptionC": "Пропустить",
+    "step3OptionCDesc": "Сначала посмотрю",
+    "step4Title": "Всё готово!",
+    "step4Subtitle": "Несколько советов для начала",
+    "tip1": "Импортируйте CSV — AI категоризирует всё автоматически",
+    "tip2": "Проверяйте AI-аналитику еженедельно, чтобы замечать паттерны",
+    "tip3": "Установите приложение на телефон для быстрого доступа",
+    "step4Button": "Перейти в дашборд →",
+    "completeSetup": "Завершить настройку",
+    "stepOf": "{current} / {total}"
+  },
+  "bottomNav": {
+    "dashboard": "Главная",
+    "import": "Импорт",
+    "insights": "Аналитика",
+    "settings": "Настройки"
+  },
   "banks": {
     "metaTitle": "Поддерживаемые банки — Импорт CSV | ExpenseAI",
     "metaDesc": "Пошаговые гайды по экспорту CSV-выписок из Chase, Bank of America, Revolut, Wise, Monzo, HSBC и 100+ других банков.",

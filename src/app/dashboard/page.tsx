@@ -137,12 +137,12 @@ export default async function DashboardPage({
 
       {!isPro && <UpgradeButton variant="banner" />}
 
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-zinc-50">{monthLabel}</h1>
           <p className="mt-1 text-sm text-zinc-400">{t("monthlyOverview")}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
           <ExportPdfButton month={currentMonthSlug} isPro={isPro} />
           <CsvImportModal isPro={isPro} importsUsed={importsUsed} />
           <AddTransactionModal />
@@ -184,10 +184,12 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <InsightsPanel
-        totalTransactions={filteredTransactions.length}
-        isPro={isPro}
-      />
+      <div id="ai-insights">
+        <InsightsPanel
+          totalTransactions={filteredTransactions.length}
+          isPro={isPro}
+        />
+      </div>
 
       <div className="mb-8">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">

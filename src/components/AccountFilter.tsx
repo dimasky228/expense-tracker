@@ -32,11 +32,11 @@ export default function AccountFilter({
 
   return (
     <div className={`flex items-center gap-2 transition-opacity ${isPending ? "opacity-50" : ""}`}>
-      <span className="text-xs text-zinc-500 shrink-0">Account:</span>
-      <div className="flex flex-wrap gap-1.5">
+      <span className="shrink-0 text-xs text-zinc-500">Account:</span>
+      <div className="flex gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button
           onClick={() => onChange("all")}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+          className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
             !currentAccount
               ? "bg-cyan-400/20 text-cyan-400 ring-1 ring-cyan-400/30"
               : "text-zinc-500 hover:text-zinc-300"
@@ -48,7 +48,7 @@ export default function AccountFilter({
           <button
             key={a}
             onClick={() => onChange(a)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
               currentAccount === a
                 ? "bg-cyan-400/20 text-cyan-400 ring-1 ring-cyan-400/30"
                 : "text-zinc-500 hover:text-zinc-300"

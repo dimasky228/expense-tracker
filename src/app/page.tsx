@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getTranslations, getLocale } from "next-intl/server";
 import LanguageSwitcher from "@/src/components/LanguageSwitcher";
+import MobileMenu from "@/src/components/MobileMenu";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("landing");
@@ -88,18 +89,21 @@ export default async function Home() {
           </Link>
           <div className="flex items-center gap-3">
             <LanguageSwitcher locale={locale} />
+            {/* Desktop nav links */}
             <Link
               href="/login"
-              className="rounded-lg px-4 py-2 text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+              className="hidden rounded-lg px-4 py-2 text-sm font-medium text-zinc-400 transition-colors hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 sm:block"
             >
               {tNav("signIn")}
             </Link>
             <Link
               href="/signup"
-              className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+              className="hidden rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 sm:block"
             >
               {tNav("getStarted")}
             </Link>
+            {/* Mobile hamburger */}
+            <MobileMenu signInLabel={tNav("signIn")} getStartedLabel={tNav("getStarted")} locale={locale} />
           </div>
         </nav>
       </header>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/src/lib/supabase/client";
 import LanguageSwitcher from "@/src/components/LanguageSwitcher";
@@ -15,8 +16,14 @@ type Props = {
 export default function DashboardNavbar({ email, isPro, hasStripeCustomer }: Props) {
   const t = useTranslations("common");
   const tDash = useTranslations("dashboard");
+  const tOnboarding = useTranslations("onboarding");
   const locale = useLocale();
   const router = useRouter();
+  const [showSetupLink, setShowSetupLink] = useState(false);
+
+  useEffect(() => {
+    setShowSetupLink(localStorage.getItem("onboarding_completed") !== "true");
+  }, []);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -43,7 +50,15 @@ export default function DashboardNavbar({ email, isPro, hasStripeCustomer }: Pro
         <Link href="/" className="text-xl font-bold text-zinc-50">
           Expense<span className="text-cyan-400">AI</span>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {showSetupLink && (
+            <Link
+              href="/dashboard/onboarding"
+              className="hidden rounded-full border border-cyan-400/30 bg-cyan-400/5 px-3 py-1 text-xs font-medium text-cyan-400 transition-colors hover:bg-cyan-400/10 sm:block"
+            >
+              {tOnboarding("completeSetup")}
+            </Link>
+          )}
           <LanguageSwitcher locale={locale} />
           <div className="hidden items-center gap-2 sm:flex">
             <span className="text-sm text-zinc-400">{email}</span>

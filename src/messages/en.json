@@ -211,6 +211,38 @@
     "Investment": "Investment",
     "Other": "Other"
   },
+  "onboarding": {
+    "step1Title": "Welcome to ExpenseAI!",
+    "step1Subtitle": "Let's set up your tracker in 30 seconds",
+    "step1Button": "Let's go →",
+    "step2Title": "What currency do you use?",
+    "step2Subtitle": "We'll format all amounts based on your selection",
+    "step2Other": "Other currency",
+    "step2OtherPlaceholder": "e.g. CHF, DKK, SGD",
+    "step2Next": "Continue",
+    "step3Title": "How would you like to start?",
+    "step3Subtitle": "You can always change this later",
+    "step3OptionA": "Upload bank statement",
+    "step3OptionADesc": "Import a CSV from your bank for best results",
+    "step3OptionB": "Add transaction manually",
+    "step3OptionBDesc": "Add your first transaction by hand",
+    "step3OptionC": "Skip for now",
+    "step3OptionCDesc": "I'll explore first",
+    "step4Title": "You're all set!",
+    "step4Subtitle": "A few tips to get the most out of ExpenseAI",
+    "tip1": "Import CSV for best results — AI will categorize everything automatically",
+    "tip2": "Check AI Insights weekly to spot spending patterns",
+    "tip3": "Install the app on your phone for quick access anywhere",
+    "step4Button": "Go to dashboard →",
+    "completeSetup": "Complete setup",
+    "stepOf": "{current} / {total}"
+  },
+  "bottomNav": {
+    "dashboard": "Dashboard",
+    "import": "Import",
+    "insights": "Insights",
+    "settings": "Settings"
+  },
   "banks": {
     "metaTitle": "Supported Banks — Import CSV from Any Bank | ExpenseAI",
     "metaDesc": "Step-by-step guides to export CSV bank statements from Chase, Bank of America, Revolut, Wise, Monzo, HSBC, and 100+ other banks.",

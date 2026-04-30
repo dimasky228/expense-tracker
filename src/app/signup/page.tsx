@@ -199,6 +199,18 @@ export default function SignupPage() {
             {t("signIn")}
           </Link>
         </p>
+
+        <p className="mt-4 text-center text-xs text-zinc-600">
+          By signing up, you agree to our{" "}
+          <Link href="/terms" className="text-zinc-500 underline underline-offset-2 hover:text-zinc-300 transition-colors">
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="text-zinc-500 underline underline-offset-2 hover:text-zinc-300 transition-colors">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );

@@ -406,12 +406,12 @@ export default async function Home() {
             Expense<span className="text-cyan-400">AI</span>
           </Link>
           <div className="flex items-center gap-6 text-sm text-zinc-500">
-            <a href="#" className="transition-colors hover:text-zinc-300">
+            <Link href="/privacy" className="transition-colors hover:text-zinc-300">
               {t("footerPrivacy")}
-            </a>
-            <a href="#" className="transition-colors hover:text-zinc-300">
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-zinc-300">
               {t("footerTerms")}
-            </a>
+            </Link>
           </div>
           <p className="text-sm text-zinc-600">
             &copy; {new Date().getFullYear()} ExpenseAI. All rights reserved.

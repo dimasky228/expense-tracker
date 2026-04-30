@@ -66,6 +66,16 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Legal links */}
+      <div className="mb-6 flex gap-4 text-xs text-zinc-600">
+        <Link href="/privacy" className="hover:text-zinc-400 transition-colors">
+          Privacy Policy
+        </Link>
+        <Link href="/terms" className="hover:text-zinc-400 transition-colors">
+          Terms of Service
+        </Link>
+      </div>
+
       {/* Danger zone */}
       <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-red-400">

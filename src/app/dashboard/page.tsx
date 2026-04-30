@@ -2,10 +2,11 @@ import { redirect } from "next/navigation";
 import { getTranslations, getLocale } from "next-intl/server";
 import { createClient } from "@/src/lib/supabase/server";
 import { getSubscription, isPro as checkIsPro, getUsageLimits } from "@/src/lib/subscription";
-import { getImportCount, currentMonth } from "@/src/lib/usage";
+import { getImportCount, getReceiptScanCount, currentMonth } from "@/src/lib/usage";
 import type { Transaction } from "@/src/types/transaction";
 import AddTransactionModal from "@/src/components/AddTransactionModal";
 import CsvImportModal from "@/src/components/CsvImportModal";
+import ReceiptImportModal from "@/src/components/ReceiptImportModal";
 import TransactionList from "@/src/components/TransactionList";
 import SpendingByCategory from "@/src/components/SpendingByCategory";
 import MonthlyTrend from "@/src/components/MonthlyTrend";
@@ -56,9 +57,10 @@ export default async function DashboardPage({
   ]);
 
   const month = currentMonth();
-  const [sub, importsUsed] = await Promise.all([
+  const [sub, importsUsed, receiptScansUsed] = await Promise.all([
     getSubscription(user.id),
     getImportCount(user.id, month),
+    getReceiptScanCount(user.id, month),
   ]);
 
   const isPro = checkIsPro(sub);
@@ -172,6 +174,7 @@ export default async function DashboardPage({
         <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
           <ExportPdfButton month={selectedSlug} isPro={isPro} />
           <CsvImportModal isPro={isPro} importsUsed={importsUsed} />
+          <ReceiptImportModal isPro={isPro} scansUsed={receiptScansUsed} />
           <AddTransactionModal />
         </div>
       </div>

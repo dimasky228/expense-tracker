@@ -33,6 +33,7 @@ export function getUsageLimits(sub: Subscription) {
   const pro = isPro(sub);
   return {
     csvImportsPerMonth: pro ? Infinity : 3,
+    receiptScansPerMonth: pro ? Infinity : 5,
     canExportPdf: pro,
     canUseInsights: pro,
   };

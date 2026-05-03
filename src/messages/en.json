@@ -239,6 +239,7 @@
   },
   "bottomNav": {
     "dashboard": "Dashboard",
+    "budgets": "Budgets",
     "import": "Import",
     "insights": "Insights",
     "settings": "Settings"

@@ -239,6 +239,7 @@
   },
   "bottomNav": {
     "dashboard": "Главная",
+    "budgets": "Бюджеты",
     "import": "Импорт",
     "insights": "Аналитика",
     "settings": "Настройки"

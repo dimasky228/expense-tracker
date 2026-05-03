@@ -17,6 +17,9 @@ import UpgradeButton from "@/src/components/UpgradeButton";
 import UpgradeSuccessToast from "@/src/components/UpgradeSuccessToast";
 import AccountFilter from "@/src/components/AccountFilter";
 import MonthNavigation from "@/src/components/MonthNavigation";
+import BudgetOverview from "@/src/components/BudgetOverview";
+import BudgetAlerts from "@/src/components/BudgetAlerts";
+import { getBudgetStatus } from "@/src/lib/budgets";
 
 function getMonthBounds(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString().split("T")[0];
@@ -63,6 +66,8 @@ export default async function DashboardPage({
     getReceiptScanCount(user.id, month),
   ]);
 
+
+
   const isPro = checkIsPro(sub);
   const limits = getUsageLimits(sub);
 
@@ -104,6 +109,10 @@ export default async function DashboardPage({
     : allTransactions;
 
   const { start, end } = getMonthBounds(selectedYear, selectedMonth);
+
+  // Fetch budget status for selected month
+  const budgetStatuses = await getBudgetStatus(user.id, start, end);
+  const budgetMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
 
   const monthTransactions = filteredTransactions.filter(
     (tr) => tr.date >= start && tr.date <= end
@@ -162,6 +171,8 @@ export default async function DashboardPage({
 
       {!isPro && <UpgradeButton variant="banner" />}
 
+      <BudgetAlerts statuses={budgetStatuses} month={budgetMonth} />
+
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <MonthNavigation
@@ -213,6 +224,8 @@ export default async function DashboardPage({
           </p>
         </div>
       </div>
+
+      <BudgetOverview statuses={budgetStatuses} />
 
       <div id="ai-insights">
         <InsightsPanel

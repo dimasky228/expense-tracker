@@ -47,9 +47,25 @@ export default function DashboardNavbar({ email, isPro, hasStripeCustomer }: Pro
   return (
     <header className="border-b border-zinc-800/50 bg-zinc-950">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="text-xl font-bold text-zinc-50">
-          Expense<span className="text-cyan-400">AI</span>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link href="/" className="text-xl font-bold text-zinc-50">
+            Expense<span className="text-cyan-400">AI</span>
+          </Link>
+          <nav className="hidden items-center gap-1 sm:flex">
+            <Link
+              href="/dashboard"
+              className="rounded-lg px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-800/60 hover:text-zinc-100"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/dashboard/budgets"
+              className="rounded-lg px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-800/60 hover:text-zinc-100"
+            >
+              Budgets
+            </Link>
+          </nav>
+        </div>
         <div className="flex items-center gap-3">
           {showSetupLink && (
             <Link

@@ -70,6 +70,12 @@ export default function DashboardNavbar({ email, isPro, hasStripeCustomer }: Pro
             >
               Recurring
             </Link>
+            <Link
+              href="/dashboard/goals"
+              className="rounded-lg px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-800/60 hover:text-zinc-100"
+            >
+              Goals
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">

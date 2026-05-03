@@ -20,6 +20,8 @@ import MonthNavigation from "@/src/components/MonthNavigation";
 import BudgetOverview from "@/src/components/BudgetOverview";
 import BudgetAlerts from "@/src/components/BudgetAlerts";
 import { getBudgetStatus } from "@/src/lib/budgets";
+import RecurringWidget from "@/src/components/RecurringWidget";
+import type { RecurringItem } from "@/src/types/recurring";
 
 function getMonthBounds(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString().split("T")[0];
@@ -110,8 +112,12 @@ export default async function DashboardPage({
 
   const { start, end } = getMonthBounds(selectedYear, selectedMonth);
 
-  // Fetch budget status for selected month
-  const budgetStatuses = await getBudgetStatus(user.id, start, end);
+  // Fetch budget status and recurring items in parallel
+  const [budgetStatuses, recurringData] = await Promise.all([
+    getBudgetStatus(user.id, start, end),
+    supabase.from("recurring").select("*").eq("user_id", user.id).eq("is_active", true).order("next_date"),
+  ]);
+  const recurringItems = (recurringData.data ?? []) as RecurringItem[];
   const budgetMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
 
   const monthTransactions = filteredTransactions.filter(
@@ -226,6 +232,7 @@ export default async function DashboardPage({
       </div>
 
       <BudgetOverview statuses={budgetStatuses} />
+      <RecurringWidget items={recurringItems} />
 
       <div id="ai-insights">
         <InsightsPanel

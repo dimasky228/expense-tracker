@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/src/lib/supabase/client";
 import { getCurrency, formatAmount as formatWithCurrency } from "@/src/lib/currency";
@@ -217,6 +218,19 @@ function TransactionRow({
       >
         {displayAmount}
       </span>
+
+      {/* Split */}
+      {transaction.type === "expense" && (
+        <Link
+          href={`/dashboard/splits?new=1&txn_id=${transaction.id}&amount=${transaction.amount}&desc=${encodeURIComponent(transaction.description ?? transaction.category)}`}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-600 transition-colors hover:bg-zinc-700/30 hover:text-cyan-400"
+          title="Split this expense"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+          </svg>
+        </Link>
+      )}
 
       {/* Edit */}
       <button

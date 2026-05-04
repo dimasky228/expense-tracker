@@ -24,6 +24,8 @@ import RecurringWidget from "@/src/components/RecurringWidget";
 import type { RecurringItem } from "@/src/types/recurring";
 import GoalsWidget from "@/src/components/GoalsWidget";
 import type { Goal } from "@/src/types/goals";
+import SplitsWidget from "@/src/components/SplitsWidget";
+import type { SplitWithParticipants, SplitParticipant } from "@/src/types/splits";
 import NotificationAutoGenerator from "@/src/components/NotificationAutoGenerator";
 
 function getMonthBounds(year: number, month: number) {
@@ -115,14 +117,28 @@ export default async function DashboardPage({
 
   const { start, end } = getMonthBounds(selectedYear, selectedMonth);
 
-  // Fetch budget status, recurring items, and goals in parallel
-  const [budgetStatuses, recurringData, goalsData] = await Promise.all([
+  // Fetch budget status, recurring items, goals, and splits in parallel
+  const [budgetStatuses, recurringData, goalsData, splitsRaw, splitParticipantsRaw] = await Promise.all([
     getBudgetStatus(user.id, start, end),
     supabase.from("recurring").select("*").eq("user_id", user.id).eq("is_active", true).order("next_date"),
     supabase.from("goals").select("*").eq("user_id", user.id).order("is_completed").order("created_at"),
+    supabase.from("splits").select("id, total_amount, description, date, is_settled").eq("user_id", user.id).eq("is_settled", false),
+    supabase.from("split_participants").select("id, split_id, name, amount, is_paid, created_at").in(
+      "split_id",
+      (await supabase.from("splits").select("id").eq("user_id", user.id).eq("is_settled", false)).data?.map((s: { id: string }) => s.id) ?? []
+    ),
   ]);
   const recurringItems = (recurringData.data ?? []) as RecurringItem[];
   const goals = (goalsData.data ?? []) as Goal[];
+
+  const splitParticipantsBySplit: Record<string, SplitParticipant[]> = {};
+  for (const p of (splitParticipantsRaw.data ?? []) as SplitParticipant[]) {
+    if (!splitParticipantsBySplit[p.split_id]) splitParticipantsBySplit[p.split_id] = [];
+    splitParticipantsBySplit[p.split_id].push(p);
+  }
+  const activeSplits: SplitWithParticipants[] = ((splitsRaw.data ?? []) as Omit<SplitWithParticipants, "participants">[]).map(
+    (s) => ({ ...s, user_id: user.id, transaction_id: null, created_at: "", participants: splitParticipantsBySplit[s.id] ?? [] })
+  );
   const budgetMonth = `${selectedYear}-${String(selectedMonth + 1).padStart(2, "0")}`;
 
   const monthTransactions = filteredTransactions.filter(
@@ -240,6 +256,7 @@ export default async function DashboardPage({
       <BudgetOverview statuses={budgetStatuses} />
       <RecurringWidget items={recurringItems} />
       <GoalsWidget goals={goals} />
+      <SplitsWidget splits={activeSplits} />
 
       <div id="ai-insights">
         <InsightsPanel

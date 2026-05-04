@@ -12,7 +12,7 @@ import SpendingByCategory from "@/src/components/SpendingByCategory";
 import MonthlyTrend from "@/src/components/MonthlyTrend";
 import TopSpending from "@/src/components/TopSpending";
 import InsightsPanel from "@/src/components/InsightsPanel";
-import ExportPdfButton from "@/src/components/ExportPdfButton";
+import ExportModal from "@/src/components/ExportModal";
 import UpgradeButton from "@/src/components/UpgradeButton";
 import UpgradeSuccessToast from "@/src/components/UpgradeSuccessToast";
 import AccountFilter from "@/src/components/AccountFilter";
@@ -211,7 +211,7 @@ export default async function DashboardPage({
           <p className="mt-1 text-sm text-zinc-400">{t("monthlyOverview")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
-          <ExportPdfButton month={selectedSlug} isPro={isPro} />
+          <ExportModal month={selectedSlug} isPro={isPro} />
           <CsvImportModal isPro={isPro} importsUsed={importsUsed} />
           <ReceiptImportModal isPro={isPro} scansUsed={receiptScansUsed} />
           <AddTransactionModal />

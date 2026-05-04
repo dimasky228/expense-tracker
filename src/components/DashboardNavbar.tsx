@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/src/lib/supabase/client";
 import LanguageSwitcher from "@/src/components/LanguageSwitcher";
+import NotificationBell from "@/src/components/NotificationBell";
 
 type Props = {
   email: string;
@@ -88,6 +89,7 @@ export default function DashboardNavbar({ email, isPro, hasStripeCustomer }: Pro
             </Link>
           )}
           <LanguageSwitcher locale={locale} />
+          <NotificationBell />
           <div className="hidden items-center gap-2 sm:flex">
             <span className="text-sm text-zinc-400">{email}</span>
             {isPro ? (

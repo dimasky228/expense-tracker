@@ -24,6 +24,7 @@ import RecurringWidget from "@/src/components/RecurringWidget";
 import type { RecurringItem } from "@/src/types/recurring";
 import GoalsWidget from "@/src/components/GoalsWidget";
 import type { Goal } from "@/src/types/goals";
+import NotificationAutoGenerator from "@/src/components/NotificationAutoGenerator";
 
 function getMonthBounds(year: number, month: number) {
   const start = new Date(year, month, 1).toISOString().split("T")[0];
@@ -177,6 +178,7 @@ export default async function DashboardPage({
 
   return (
     <div>
+      <NotificationAutoGenerator />
       <UpgradeSuccessToast show={showUpgradeToast} />
 
       {!isPro && <UpgradeButton variant="banner" />}

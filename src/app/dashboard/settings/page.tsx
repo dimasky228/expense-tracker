@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/src/lib/supabase/client";
+import { DEFAULT_PREFS } from "@/src/lib/notifications";
+import type { NotificationPref } from "@/src/lib/notifications";
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
@@ -13,6 +15,7 @@ export default function SettingsPage() {
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPref>(DEFAULT_PREFS);
 
   // Get email from Supabase client-side
   const [email, setEmail] = useState<string>("");
@@ -22,6 +25,23 @@ export default function SettingsPage() {
       .then(({ data }) => {
         if (data.user?.email) setEmail(data.user.email);
       });
+  }
+
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("notification_prefs") ?? "{}") as Partial<NotificationPref>;
+      setNotifPrefs({ ...DEFAULT_PREFS, ...stored });
+    } catch {
+      // use defaults
+    }
+  }, []);
+
+  function togglePref(key: keyof NotificationPref) {
+    setNotifPrefs((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem("notification_prefs", JSON.stringify(next));
+      return next;
+    });
   }
 
   async function handleDeleteAccount() {
@@ -64,6 +84,43 @@ export default function SettingsPage() {
           <p className="text-xs text-zinc-500">{t("yourEmail")}</p>
           <p className="mt-1 text-sm text-zinc-200">{email || "—"}</p>
         </div>
+      </div>
+
+      {/* Notification preferences */}
+      <div className="mb-6 rounded-2xl border border-zinc-800/60 bg-zinc-900/50 p-6">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-500">
+          Notifications
+        </h2>
+        <div className="space-y-4">
+          {(
+            [
+              { key: "budget_alerts" as const, label: "Budget alerts", desc: "Get notified when you're approaching or exceeding a budget" },
+              { key: "recurring_reminders" as const, label: "Recurring reminders", desc: "Reminders for upcoming and overdue subscription payments" },
+              { key: "goal_updates" as const, label: "Goal updates", desc: "Milestone celebrations and deadline reminders for your goals" },
+              { key: "spending_insights" as const, label: "Spending insights", desc: "Alerts for spending spikes and positive savings patterns" },
+            ] as { key: keyof NotificationPref; label: string; desc: string }[]
+          ).map(({ key, label, desc }) => (
+            <div key={key} className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium text-zinc-200">{label}</p>
+                <p className="text-xs text-zinc-500">{desc}</p>
+              </div>
+              <button
+                onClick={() => togglePref(key)}
+                className={`relative shrink-0 h-6 w-11 rounded-full transition-colors ${notifPrefs[key] ? "bg-cyan-500" : "bg-zinc-700"}`}
+                role="switch"
+                aria-checked={notifPrefs[key]}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${notifPrefs[key] ? "translate-x-5" : "translate-x-0"}`}
+                />
+              </button>
+            </div>
+          ))}
+        </div>
+        <p className="mt-4 text-xs text-zinc-600">
+          In-app only. Changes take effect on your next dashboard visit.
+        </p>
       </div>
 
       {/* Legal links */}

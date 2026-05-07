@@ -1,17 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/src/lib/supabase/server";
+import { getAuthUser } from "@/src/lib/api-auth";
 import { createAdminClient } from "@/src/lib/supabase/admin";
 import { getStripe } from "@/src/lib/stripe";
 
-export async function POST() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function POST(request: Request) {
+  const { user, error: authError } = await getAuthUser(request);
+  if (!user) return NextResponse.json({ error: authError ?? "Unauthorized" }, { status: 401 });
 
   const stripe = getStripe();
   const admin = createAdminClient();

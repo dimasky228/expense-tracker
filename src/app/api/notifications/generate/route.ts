@@ -1,4 +1,4 @@
-import { createClient } from "@/src/lib/supabase/server";
+import { getAuthUser } from "@/src/lib/api-auth";
 import { getBudgetStatus } from "@/src/lib/budgets";
 import type { NotificationType } from "@/src/lib/notifications";
 
@@ -17,11 +17,8 @@ function monthBounds(year: number, month: number) {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const { user, supabase, error: authError } = await getAuthUser(request);
+  if (!user) return Response.json({ error: authError ?? "Unauthorized" }, { status: 401 });
 
   const userId = user.id;
 
@@ -49,7 +46,7 @@ export async function POST(request: Request) {
     { data: prevTxns },
     { data: existingNotifs },
   ] = await Promise.all([
-    getBudgetStatus(userId, curStart, curEnd).catch(() => []),
+    getBudgetStatus(userId, curStart, curEnd, supabase).catch(() => []),
     supabase.from("recurring").select("id, name, amount, next_date").eq("user_id", userId).eq("is_active", true),
     supabase.from("goals").select("id, name, target_amount, current_amount, deadline, is_completed").eq("user_id", userId).eq("is_completed", false),
     supabase.from("transactions").select("category, amount, type").eq("user_id", userId).gte("date", curStart).lte("date", curEnd),

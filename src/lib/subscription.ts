@@ -1,4 +1,5 @@
 import { createClient } from "@/src/lib/supabase/server";
+import type { AppSupabaseClient } from "@/src/lib/api-auth";
 
 export type Subscription = {
   status: "free" | "pro" | "canceled" | "past_due";
@@ -7,8 +8,11 @@ export type Subscription = {
   current_period_end: string | null;
 };
 
-export async function getSubscription(userId: string): Promise<Subscription> {
-  const supabase = await createClient();
+export async function getSubscription(
+  userId: string,
+  client?: AppSupabaseClient
+): Promise<Subscription> {
+  const supabase = client ?? (await createClient());
   const { data } = await supabase
     .from("subscriptions")
     .select("status, stripe_customer_id, stripe_subscription_id, current_period_end")

@@ -1,4 +1,5 @@
 import { createClient } from "@/src/lib/supabase/server";
+import type { AppSupabaseClient } from "@/src/lib/api-auth";
 
 export type Budget = {
   id: string;
@@ -28,9 +29,10 @@ export async function getBudgets(userId: string): Promise<Budget[]> {
 export async function getBudgetStatus(
   userId: string,
   monthStart: string,
-  monthEnd: string
+  monthEnd: string,
+  client?: AppSupabaseClient
 ): Promise<BudgetStatus[]> {
-  const supabase = await createClient();
+  const supabase = client ?? (await createClient());
 
   const [{ data: budgets }, { data: transactions }] = await Promise.all([
     supabase

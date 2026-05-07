@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@/src/lib/supabase/server";
+import { getAuthUser } from "@/src/lib/api-auth";
 import { parseCSV } from "@/src/lib/csv-parser";
 import { generateImportHash, findDuplicates, findPotentialTransfers } from "@/src/lib/dedup";
 import { getSubscription, getUsageLimits } from "@/src/lib/subscription";
@@ -80,21 +80,15 @@ Return ONLY a valid JSON array — no prose, no markdown fences:
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { user, supabase, error: authError } = await getAuthUser(request);
+  if (!user) return NextResponse.json({ error: authError ?? "Unauthorized" }, { status: 401 });
 
   // Check CSV import limit for free users
-  const sub = await getSubscription(user.id);
+  const sub = await getSubscription(user.id, supabase);
   const limits = getUsageLimits(sub);
   if (limits.csvImportsPerMonth !== Infinity) {
     const month = currentMonth();
-    const used = await getImportCount(user.id, month);
+    const used = await getImportCount(user.id, month, supabase);
     if (used >= limits.csvImportsPerMonth) {
       return NextResponse.json(
         {
@@ -202,7 +196,7 @@ export async function POST(request: NextRequest) {
       : [];
 
   if (newRows.length === 0) {
-    await incrementImportCount(user.id, currentMonth());
+    await incrementImportCount(user.id, currentMonth(), supabase);
     return NextResponse.json({
       transactions: [],
       duplicateCount: duplicateRows.length,

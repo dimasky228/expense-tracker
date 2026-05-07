@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 
 import * as XLSX from "xlsx";
-import { createClient } from "@/src/lib/supabase/server";
+import { getAuthUser } from "@/src/lib/api-auth";
 import { getSubscription, isPro } from "@/src/lib/subscription";
 import type { Transaction } from "@/src/types/transaction";
 
@@ -27,13 +27,10 @@ function resolveDateRange(searchParams: URLSearchParams): {
 }
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const { user, supabase, error: authError } = await getAuthUser(request);
+  if (!user) return Response.json({ error: authError ?? "Unauthorized" }, { status: 401 });
 
-  const sub = await getSubscription(user.id);
+  const sub = await getSubscription(user.id, supabase);
   if (!isPro(sub)) {
     return Response.json({ error: "Excel export is a Pro feature.", code: "PRO_REQUIRED" }, { status: 403 });
   }

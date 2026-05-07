@@ -1,4 +1,4 @@
-import { createClient } from "@/src/lib/supabase/server";
+import { getAuthUser } from "@/src/lib/api-auth";
 import type { Transaction } from "@/src/types/transaction";
 
 function escapeField(value: string | number, sep: string): string {
@@ -31,11 +31,8 @@ function resolveDateRange(searchParams: URLSearchParams): {
 }
 
 export async function GET(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const { user, supabase, error: authError } = await getAuthUser(request);
+  if (!user) return Response.json({ error: authError ?? "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const format = searchParams.get("format") === "tsv" ? "tsv" : "csv";

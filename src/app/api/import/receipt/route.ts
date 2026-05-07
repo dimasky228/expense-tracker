@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@/src/lib/supabase/server";
+import { getAuthUser } from "@/src/lib/api-auth";
 import { getSubscription, getUsageLimits } from "@/src/lib/subscription";
 import {
   getReceiptScanCount,
@@ -74,21 +74,15 @@ If this is not a receipt or invoice, return:
 {"error": "This doesn't appear to be a receipt or invoice"}`;
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { user, supabase, error: authError } = await getAuthUser(request);
+  if (!user) return NextResponse.json({ error: authError ?? "Unauthorized" }, { status: 401 });
 
   // Check receipt scan limit for free users
-  const sub = await getSubscription(user.id);
+  const sub = await getSubscription(user.id, supabase);
   const limits = getUsageLimits(sub);
   if (limits.receiptScansPerMonth !== Infinity) {
     const month = currentMonth();
-    const used = await getReceiptScanCount(user.id, month);
+    const used = await getReceiptScanCount(user.id, month, supabase);
     if (used >= limits.receiptScansPerMonth) {
       return NextResponse.json(
         {
@@ -204,7 +198,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Increment usage counter
-  await incrementReceiptScanCount(user.id, currentMonth());
+  await incrementReceiptScanCount(user.id, currentMonth(), supabase);
 
   return NextResponse.json(result);
 }

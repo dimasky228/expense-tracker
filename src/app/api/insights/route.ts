@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { createClient } from "@/src/lib/supabase/server";
+import { getAuthUser } from "@/src/lib/api-auth";
 import { getSubscription, getUsageLimits } from "@/src/lib/subscription";
 import type { Transaction } from "@/src/types/transaction";
 
@@ -132,15 +132,11 @@ ${monthlyTotals}
 TOTAL TRANSACTIONS IN HISTORY: ${txns.length}`;
 }
 
-export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export async function GET(request: Request) {
+  const { user, supabase, error: authError } = await getAuthUser(request);
+  if (!user) return NextResponse.json({ error: authError ?? "Unauthorized" }, { status: 401 });
 
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const sub = await getSubscription(user.id);
+  const sub = await getSubscription(user.id, supabase);
   if (!getUsageLimits(sub).canUseInsights) {
     return NextResponse.json(
       { error: "AI insights is a Pro feature. Upgrade to unlock.", code: "PRO_REQUIRED" },

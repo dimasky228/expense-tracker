@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { createElement, type ReactElement } from "react";
-import { createClient } from "@/src/lib/supabase/server";
+import { getAuthUser } from "@/src/lib/api-auth";
 import { getSubscription, getUsageLimits } from "@/src/lib/subscription";
 import MonthlyReport from "@/src/components/pdf/MonthlyReport";
 import type { Transaction } from "@/src/types/transaction";
@@ -10,16 +10,10 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const monthParam = searchParams.get("month"); // YYYY-MM
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, supabase, error: authError } = await getAuthUser(request);
+  if (!user) return NextResponse.json({ error: authError ?? "Unauthorized" }, { status: 401 });
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const sub = await getSubscription(user.id);
+  const sub = await getSubscription(user.id, supabase);
   if (!getUsageLimits(sub).canExportPdf) {
     return NextResponse.json(
       { error: "PDF export is a Pro feature. Upgrade to unlock.", code: "PRO_REQUIRED" },

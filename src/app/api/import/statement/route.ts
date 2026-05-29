@@ -1,4 +1,3 @@
-```typescript
 import Anthropic from "@anthropic-ai/sdk";
 
 export async function POST(req: Request) {
@@ -14,12 +13,14 @@ export async function POST(req: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
+  const prompt = "Parse this bank statement and extract ALL transactions. Return ONLY a JSON array, no other text. Each item: date (YYYY-MM-DD), description (string), amount (number, negative for expenses, positive for income), currency (string). Extract every single transaction, do not skip any.\n\nBank statement:\n" + text;
+
   const msg = await client.messages.create({
     model: "claude-sonnet-4-20250514",
     max_tokens: 8000,
     messages: [{
       role: "user",
-      content: `Parse this bank statement and extract ALL transactions. Return ONLY a JSON array, no other text. Each item: date (YYYY-MM-DD), description (string), amount (number, negative for expenses, positive for income), currency (string). Extract every single transaction, do not skip any.\n\nBank statement:\n${text}`,
+      content: prompt,
     }],
   });
 
@@ -28,4 +29,3 @@ export async function POST(req: Request) {
   const transactions = JSON.parse(clean);
   return Response.json({ transactions });
 }
-```

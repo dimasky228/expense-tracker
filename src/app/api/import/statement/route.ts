@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-  const prompt = "Parse this bank statement and extract ALL transactions. Return ONLY a JSON array, no other text. Each item: date (YYYY-MM-DD), description (string), amount (number, negative for expenses, positive for income), currency (string - preserve the ORIGINAL currency from the statement, do NOT convert amounts, set currency per transaction e.g. 'KZT', 'USD', 'EUR'). Extract every single transaction, do not skip any.\n\nBank statement:\n" + text;
+  const prompt = "Parse this bank statement and extract ALL transactions. Return ONLY a JSON array, no other text. Each item must have: date (YYYY-MM-DD), description (string), amount (number, negative for expenses, positive for income), currency (string - preserve ORIGINAL currency e.g. 'KZT'), category (string - pick the best matching category from this list: Food & Dining, Transport, Shopping, Health, Housing, Entertainment, Education, Travel, Subscriptions, Business, Gifts, Salary, Investments, Freelance, Other). Use the transaction description to determine the category. For example: restaurants/cafes = Food & Dining, taxi/uber/gas = Transport, netflix/spotify = Subscriptions, salary/зарплата = Salary. If unsure, use Other. Extract every single transaction, do not skip any.\n\nBank statement:\n" + text;
   
   const msg = await client.messages.create({
     model: "claude-sonnet-4-20250514",
